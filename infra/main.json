@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": {
+      "value": "dev"
+    },
+    "location": {
+      "value": "canadaeast"
+    },
+    "projectName": {
+      "value": "secure-db"
+    },
+    "adminObjectId": {
+      "value": ""
+    },
+    "enableUnityCatalog": {
+      "value": true
+    },
+    "deployAzureML": {
+      "value": true
+    },
+    "deployAIFoundry": {
+      "value": true
+    },
+    "deployAKS": {
+      "value": false
+    },
+    "aksNodeCount": {
+      "value": 3
+    },
+    "tags": {
+      "value": {
+        "Environment": "dev",
+        "Project": "secure-databricks-azureml",
+        "ManagedBy": "Bicep"
+      }
+    }
+  }
+}

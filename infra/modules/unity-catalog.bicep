@@ -11,10 +11,8 @@ param projectName string
 param environmentName string
 param databricksWorkspaceUrl string
 param databricksWorkspaceId string
-param storageAccountId string
 param storageAccountName string
 param storageContainerName string
-param adminObjectId string
 param tags object
 
 // Variables

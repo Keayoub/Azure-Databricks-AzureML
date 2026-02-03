@@ -24,9 +24,6 @@ param projectName string
 @description('Enable Unity Catalog for Databricks')
 param enableUnityCatalog bool = true
 
-@description('Enable Delta Sharing for Databricks')
-param enableDeltaSharing bool = true
-
 @description('Deploy Azure ML workspace')
 param deployAzureML bool = true
 
@@ -87,8 +84,6 @@ module databricks 'modules/databricks.bicep' = {
     vnetId: networking.outputs.vnetId
     privateSubnetName: networking.outputs.databricksPrivateSubnetName
     publicSubnetName: networking.outputs.databricksPublicSubnetName
-    enableUnityCatalog: enableUnityCatalog
-    enableDeltaSharing: enableDeltaSharing
     tags: tags
   }
 }
@@ -179,7 +174,6 @@ module aks 'modules/aks.bicep' = if (deployAKS) {
     location: location
     projectName: projectName
     environmentName: environmentName
-    vnetId: networking.outputs.vnetId
     aksSubnetId: networking.outputs.aksSubnetId
     nodeCount: aksNodeCount
     tags: tags
@@ -196,16 +190,10 @@ module unityCatalog 'modules/unity-catalog.bicep' = if (enableUnityCatalog) {
     environmentName: environmentName
     databricksWorkspaceUrl: databricks.outputs.workspaceUrl
     databricksWorkspaceId: databricks.outputs.workspaceId
-    storageAccountId: storage.outputs.storageAccountId
     storageAccountName: storage.outputs.storageAccountName
     storageContainerName: 'unity-catalog'
-    adminObjectId: adminObjectId
     tags: tags
   }
-  dependsOn: [
-    databricks
-    storage
-  ]
 }
 
 // ========== Outputs ==========
@@ -215,8 +203,8 @@ output databricksWorkspaceId string = databricks.outputs.workspaceId
 output storageAccountName string = storage.outputs.storageAccountName
 output keyVaultName string = keyVault.outputs.keyVaultName
 output containerRegistryName string = containerRegistry.outputs.acrName
-output azureMLWorkspaceName string = deployAzureML ? azureML.outputs.workspaceName : 'Not deployed'
-output aiFoundryHubName string = deployAIFoundry ? aiFoundry.outputs.hubName : 'Not deployed'
-output aksClusterName string = deployAKS ? aks.outputs.aksClusterName : 'Not deployed'
+output azureMLWorkspaceName string = deployAzureML ? azureML!.outputs.workspaceName : 'Not deployed'
+output aiFoundryHubName string = deployAIFoundry ? aiFoundry!.outputs.hubName : 'Not deployed'
+output aksClusterName string = deployAKS ? aks!.outputs.aksClusterName : 'Not deployed'
 output unityCatalogMetastoreName string = 'See deployment logs for Unity Catalog metastore details'
 output vnetName string = networking.outputs.vnetName

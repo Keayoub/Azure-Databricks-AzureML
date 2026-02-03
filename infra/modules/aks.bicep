@@ -7,7 +7,6 @@
 param location string
 param projectName string
 param environmentName string
-param vnetId string
 param aksSubnetId string
 param nodeCount int
 param tags object
@@ -35,9 +34,8 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       networkPlugin: 'azure'
       networkPluginMode: 'overlay'
       networkDataplane: 'cilium'
-      serviceAddressPrefix: '10.1.0.0/16'
       dnsServiceIP: '10.1.0.10'
-      dockerBridgeCIDR: '172.17.0.1/16'
+      serviceCidr: '10.1.0.0/16'
       outboundType: 'loadBalancer'
       loadBalancerSku: 'standard'
     }
@@ -52,7 +50,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         minCount: 1
         enableAutoScaling: true
         enableNodePublicIP: false
-        enableCustomCAMaintenance: false
         type: 'VirtualMachineScaleSets'
         mode: 'System'
         vnetSubnetID: aksSubnetId
@@ -74,18 +71,14 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         vnetSubnetID: aksSubnetId
         podSubnetID: aksSubnetId
         nodeTaints: [
-          {
-            key: 'workload'
-            value: 'inference'
-            effect: 'NoSchedule'
-          }
+          'workload=inference:NoSchedule'
         ]
       }
     ]
     apiServerAccessProfile: {
       enablePrivateCluster: true
       enablePrivateClusterPublicFQDN: false
-      privateDnsZone: 'system'
+      privateDNSZone: 'system'
       authorizedIPRanges: []
     }
     autoUpgradeProfile: {
@@ -152,6 +145,5 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
 // ========== Outputs ==========
 output aksClusterName string = aksCluster.name
 output aksClusterResourceId string = aksCluster.id
-output kubeConfig string = aksCluster.listClusterAdminCredential().kubeconfigs[0].value
 output fqdn string = aksCluster.properties.fqdn
 output privateFqdn string = aksCluster.properties.privateFQDN

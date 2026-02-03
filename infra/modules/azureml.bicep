@@ -20,6 +20,17 @@ var workspaceName = 'aml-${projectName}-${environmentName}'
 var applicationInsightsName = 'appi-${projectName}-${environmentName}'
 var privateEndpointName = 'pe-aml-${projectName}-${environmentName}'
 
+var storageAccountName = split(storageAccountId, '/')[8]
+var keyVaultName = split(keyVaultId, '/')[8]
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
+  name: storageAccountName
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+}
+
 // ========== Application Insights ==========
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: applicationInsightsName
@@ -61,7 +72,7 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
 
 // Assign Storage Blob Data Reader role to workspace
 resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: storageAccountId
+  scope: storageAccount
   name: guid(storageAccountId, workspace.id, 'StorageBlobDataReader')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1') // Storage Blob Data Reader
@@ -72,7 +83,7 @@ resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
 
 // Assign Key Vault Secrets User role to workspace
 resource keyVaultSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVaultId
+  scope: keyVault
   name: guid(keyVaultId, workspace.id, 'KeyVaultSecretsUser')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86a0e88') // Key Vault Secrets User
@@ -156,13 +167,13 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
       scaleSettings: {
         maxNodeCount: 10
         minNodeCount: 0
-        nodeIdleTimeBeforeScaleDown: 900
+        nodeIdleTimeBeforeScaleDown: 'PT15M'
       }
       userAccountCredentials: null
       subnet: {
         id: computeSubnetId
       }
-      remoteLoginPortPubliclyAccessible: false
+      remoteLoginPortPublicAccess: 'Disabled'
       isolatedNetwork: false
     }
   }

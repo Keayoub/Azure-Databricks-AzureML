@@ -13,8 +13,6 @@ param environmentName string
 param vnetId string
 param privateSubnetName string
 param publicSubnetName string
-param enableUnityCatalog bool
-param enableDeltaSharing bool
 param tags object
 
 var workspaceName = 'dbw-${projectName}-${environmentName}'

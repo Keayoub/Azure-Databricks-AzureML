@@ -10,7 +10,6 @@ param adminObjectId = '' // Run: az ad signed-in-user show --query id -o tsv
 
 // Feature flags
 param enableUnityCatalog = true
-param enableDeltaSharing = true
 param deployAzureML = true
 param deployAIFoundry = true
 param deployAKS = false
