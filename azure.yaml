@@ -1,0 +1,29 @@
+# Azure Developer CLI (azd) configuration file
+# yaml-language-server: $schema=https://aka.ms/azure-dev-schema
+
+name: secure-databricks-azureml
+metadata:
+  template: secure-databricks-azureml@0.0.1-beta
+
+# Infra configuration
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
+# Pipeline configuration
+pipeline:
+  provider: azdo
+
+# Hook configuration
+hooks:
+  preprovision:
+    shell: pwsh
+    run: |
+      Write-Host "Validating deployment configuration..." -ForegroundColor Green
+      
+  postprovision:
+    shell: pwsh
+    run: |
+      Write-Host "Deployment complete! Review the resources in Azure Portal" -ForegroundColor Green
+      Write-Host "Resource Group: $env:AZURE_RESOURCE_GROUP" -ForegroundColor Cyan

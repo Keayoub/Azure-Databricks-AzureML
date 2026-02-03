@@ -1,0 +1,157 @@
+// Azure Kubernetes Service (AKS) Cluster Module
+// This module deploys AKS for:
+// - Azure ML model serving
+// - Inference endpoints
+// - Containerized workloads
+
+param location string
+param projectName string
+param environmentName string
+param vnetId string
+param aksSubnetId string
+param nodeCount int
+param tags object
+
+var clusterName = 'aks-${projectName}-${environmentName}'
+
+// ========== Azure Kubernetes Service ==========
+resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
+  name: clusterName
+  location: location
+  tags: tags
+  sku: {
+    name: 'Base'
+    tier: 'Standard'
+  }
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    dnsPrefix: clusterName
+    kubernetesVersion: '1.29' // Latest stable version
+    enableRBAC: true
+    enablePodSecurityPolicy: false // Deprecated - use Pod Security Standards instead
+    networkProfile: {
+      networkPlugin: 'azure'
+      networkPluginMode: 'overlay'
+      networkDataplane: 'cilium'
+      serviceAddressPrefix: '10.1.0.0/16'
+      dnsServiceIP: '10.1.0.10'
+      dockerBridgeCIDR: '172.17.0.1/16'
+      outboundType: 'loadBalancer'
+      loadBalancerSku: 'standard'
+    }
+    agentPoolProfiles: [
+      {
+        name: 'systempool'
+        count: nodeCount
+        vmSize: 'Standard_DS3_v2'
+        osType: 'Linux'
+        osSKU: 'AzureLinux'
+        maxCount: 10
+        minCount: 1
+        enableAutoScaling: true
+        enableNodePublicIP: false
+        enableCustomCAMaintenance: false
+        type: 'VirtualMachineScaleSets'
+        mode: 'System'
+        vnetSubnetID: aksSubnetId
+        podSubnetID: aksSubnetId
+        nodeTaints: []
+      }
+      {
+        name: 'userpool'
+        count: nodeCount
+        vmSize: 'Standard_D4s_v3'
+        osType: 'Linux'
+        osSKU: 'AzureLinux'
+        maxCount: 20
+        minCount: 0
+        enableAutoScaling: true
+        enableNodePublicIP: false
+        type: 'VirtualMachineScaleSets'
+        mode: 'User'
+        vnetSubnetID: aksSubnetId
+        podSubnetID: aksSubnetId
+        nodeTaints: [
+          {
+            key: 'workload'
+            value: 'inference'
+            effect: 'NoSchedule'
+          }
+        ]
+      }
+    ]
+    apiServerAccessProfile: {
+      enablePrivateCluster: true
+      enablePrivateClusterPublicFQDN: false
+      privateDnsZone: 'system'
+      authorizedIPRanges: []
+    }
+    autoUpgradeProfile: {
+      upgradeChannel: 'patch'
+    }
+    addonProfiles: {
+      omsagent: {
+        enabled: true
+        config: {
+          logAnalyticsWorkspaceResourceID: '/subscriptions/${subscription().subscriptionId}/resourcegroups/${resourceGroup().name}/providers/microsoft.operationalinsights/workspaces/log-${projectName}-${environmentName}'
+        }
+      }
+      azurepolicy: {
+        enabled: true
+        config: {
+          version: 'v2'
+        }
+      }
+      ingressApplicationGateway: {
+        enabled: false
+      }
+    }
+    securityProfile: {
+      defender: {
+        logAnalyticsWorkspaceResourceId: '/subscriptions/${subscription().subscriptionId}/resourcegroups/${resourceGroup().name}/providers/microsoft.operationalinsights/workspaces/log-${projectName}-${environmentName}'
+        securityMonitoring: {
+          enabled: true
+        }
+      }
+      imageCleaner: {
+        enabled: true
+        intervalHours: 24
+      }
+      azureKeyVaultKms: {
+        enabled: false
+      }
+      workloadIdentity: {
+        enabled: true
+      }
+    }
+    httpProxyConfig: {
+      httpProxy: null
+      httpsProxy: null
+      noProxy: []
+      trustedCa: null
+    }
+    storageProfile: {
+      blobCSIDriver: {
+        enabled: true
+      }
+      diskCSIDriver: {
+        enabled: true
+      }
+      fileCSIDriver: {
+        enabled: true
+      }
+      snapshotController: {
+        enabled: true
+      }
+    }
+  }
+}
+
+// ========== Outputs ==========
+output aksClusterName string = aksCluster.name
+output aksClusterResourceId string = aksCluster.id
+output kubeConfig string = aksCluster.listClusterAdminCredential().kubeconfigs[0].value
+output fqdn string = aksCluster.properties.fqdn
+output privateFqdn string = aksCluster.properties.privateFQDN

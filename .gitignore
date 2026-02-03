@@ -1,0 +1,151 @@
+# Git ignore patterns for Secure Databricks Azure ML IaC project
+
+# Azure Developer CLI
+.azure/
+azure-dev.cache
+
+# Bicep and ARM Templates
+*.bicep.json
+*.template.json
+bin/
+obj/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.code-workspace
+
+# Azure CLI
+.cli/
+
+# Terraform (if using Terraform instead of Bicep)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+override.tf
+*.tfvars
+*.tfvars.json
+
+# Secrets and credentials
+*.key
+*.pem
+*.crt
+*.pfx
+*.p12
+secrets/
+.env
+.env.local
+credentials.json
+connection-strings.json
+*-secrets.bicepparam
+
+# Sensitive files
+private-keys/
+credentials/
+tokens.txt
+.credentials
+
+# Logs
+*.log
+logs/
+debug.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# OS specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build outputs
+bin/
+obj/
+out/
+dist/
+
+# Test results
+test-results/
+.coverage
+htmlcov/
+
+# Documentation build files
+docs/_build/
+site/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig
+kubeconfig.yaml
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# Project specific
+.project-settings
+deployment-history.json
+deployment-logs/
+audit-logs/
+
+# azd specific
+.azdo/pipelines/*.json
+.azdo/pipelines/*.yml.bak
+
+# Parameter files with sensitive data (create parameter-specific excludes)
+# infra/main.*.bicepparam  # Uncomment to ignore environment-specific param files
+
+# Do NOT ignore these important files
+!.github/
+!.gitkeep
+!README.md
+!DEPLOYMENT-SUMMARY.md
+!POST-DEPLOYMENT.md
+!PROJECT-STRUCTURE.md
+!azure.yaml
+!infra/main.bicep
+!infra/main.bicepparam
+!infra/modules/
+!.azdo/pipelines/azure-dev.yml

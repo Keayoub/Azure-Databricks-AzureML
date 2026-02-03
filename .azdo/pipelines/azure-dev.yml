@@ -1,0 +1,38 @@
+# Azure DevOps Pipeline for azd deployment
+
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: AZURE_LOCATION
+    value: 'eastus'
+
+stages:
+  - stage: Provision
+    displayName: 'Provision Infrastructure'
+    jobs:
+      - job: Provision
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Install azd'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                curl -fsSL https://aka.ms/install-azd.sh | bash
+          
+          - task: AzureCLI@2
+            displayName: 'Provision Infrastructure'
+            inputs:
+              azureSubscription: '$(AZURE_SERVICE_CONNECTION)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                azd provision --no-prompt
+            env:
+              AZURE_ENV_NAME: $(AZURE_ENV_NAME)
+              AZURE_LOCATION: $(AZURE_LOCATION)
