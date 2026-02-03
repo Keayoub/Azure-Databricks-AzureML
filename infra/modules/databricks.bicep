@@ -13,6 +13,7 @@ param environmentName string
 param vnetId string
 param privateSubnetName string
 param publicSubnetName string
+param privateEndpointSubnetId string
 param tags object
 
 var workspaceName = 'dbw-${projectName}-${environmentName}'
@@ -52,10 +53,108 @@ resource databricksWorkspace 'Microsoft.Databricks/workspaces@2024-05-01' = {
       }
     }
     publicNetworkAccess: 'Disabled' // Disable public network access for enhanced security
-    requiredNsgRules: 'AllRules'
+    requiredNsgRules: 'NoAzureDatabricksRules'
     // Unity Catalog configuration
     // Note: Unity Catalog metastore must be created separately via Databricks API
     // This can be done post-deployment using Databricks CLI or REST API
+  }
+}
+
+// ========== Private Endpoints for Databricks Control Plane ==========
+// Required for accessing workspace UI and APIs when publicNetworkAccess is Disabled
+
+// Private DNS Zones for Databricks
+resource databricksUiPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+  name: 'privatelink.azuredatabricks.net'
+  location: 'global'
+  tags: tags
+}
+
+resource databricksUiDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  parent: databricksUiPrivateDnsZone
+  name: '${workspaceName}-ui-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnetId
+    }
+  }
+}
+
+// Private Endpoint for Workspace UI and API (databricks_ui_api)
+resource databricksUiPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: 'pe-${workspaceName}-ui'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'databricks-ui-connection'
+        properties: {
+          privateLinkServiceId: databricksWorkspace.id
+          groupIds: [
+            'databricks_ui_api'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource databricksUiPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: databricksUiPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'databricks-ui-config'
+        properties: {
+          privateDnsZoneId: databricksUiPrivateDnsZone.id
+        }
+      }
+    ]
+  }
+}
+
+// Private Endpoint for Browser Authentication (browser_authentication)
+resource databricksBrowserAuthPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
+  name: 'pe-${workspaceName}-auth'
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'databricks-auth-connection'
+        properties: {
+          privateLinkServiceId: databricksWorkspace.id
+          groupIds: [
+            'browser_authentication'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource databricksBrowserAuthPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-11-01' = {
+  parent: databricksBrowserAuthPrivateEndpoint
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'databricks-auth-config'
+        properties: {
+          privateDnsZoneId: databricksUiPrivateDnsZone.id
+        }
+      }
+    ]
   }
 }
 

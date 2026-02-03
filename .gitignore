@@ -149,3 +149,5 @@ audit-logs/
 !infra/main.bicepparam
 !infra/modules/
 !.azdo/pipelines/azure-dev.yml
+infra/main.json
+infra/main.json

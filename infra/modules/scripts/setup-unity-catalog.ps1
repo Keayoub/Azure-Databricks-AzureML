@@ -9,7 +9,8 @@ param(
     [string]$StorageContainerName,
     [string]$MetastoreName,
     [string]$ProjectName,
-    [string]$Environment
+    [string]$Environment,
+    [string]$Location
 )
 
 # Enable error handling
@@ -43,18 +44,6 @@ $headers = @{
     "Content-Type"  = "application/json"
 }
 
-# ========== Get Storage Account Key ==========
-# Get the access key for the storage account
-try {
-    $resourceGroupName = (az storage account show --name $StorageAccountName --query resourceGroup -o tsv)
-    $storageKey = (az storage account keys list --account-name $StorageAccountName --resource-group $resourceGroupName --query "[0].value" -o tsv)
-    Write-Output "✓ Retrieved storage account key"
-}
-catch {
-    Write-Error "Failed to get storage account key: $_"
-    exit 1
-}
-
 # ========== Create Metastore ==========
 # Create Unity Catalog metastore
 $storageRoot = "abfss://${StorageContainerName}@${StorageAccountName}.dfs.core.windows.net/"
@@ -62,7 +51,7 @@ $storageRoot = "abfss://${StorageContainerName}@${StorageAccountName}.dfs.core.w
 $metastorePayload = @{
     name           = $MetastoreName
     storage_root   = $storageRoot
-    region         = "eastus"
+    region         = $Location
     delta_sharing_scope = "ALL"
 } | ConvertTo-Json
 
@@ -188,13 +177,17 @@ catch {
 }
 
 # ========== Create Catalogs ==========
-# Create default catalogs
-$catalogNames = @("raw_data", "processed_data", "analytics")
+# Create LoB catalogs per environment
+$catalogNames = @(
+    "${Environment}_lob_team_1",
+    "${Environment}_lob_team_2",
+    "${Environment}_lob_team_3"
+)
 
 foreach ($catalogName in $catalogNames) {
     $catalogPayload = @{
         name = $catalogName
-        comment = "Catalog for ${catalogName} data in ${Environment} environment"
+        comment = "Catalog for ${catalogName} in ${Environment} environment"
     } | ConvertTo-Json
     
     try {
@@ -219,41 +212,41 @@ foreach ($catalogName in $catalogNames) {
 }
 
 # ========== Create Schemas ==========
-# Create default schemas in each catalog
-$schemas = @(
-    @{ catalog = "raw_data"; schema = "bronze"; comment = "Bronze layer - raw data" }
-    @{ catalog = "processed_data"; schema = "silver"; comment = "Silver layer - cleaned data" }
-    @{ catalog = "processed_data"; schema = "gold"; comment = "Gold layer - business data" }
-    @{ catalog = "analytics"; schema = "reports"; comment = "Analytics and reporting schemas" }
-    @{ catalog = "analytics"; schema = "ml_features"; comment = "Machine learning features" }
+# Create medallion schemas in each catalog
+$schemaNames = @(
+    @{ name = "bronze"; comment = "Bronze layer - raw data" },
+    @{ name = "silver"; comment = "Silver layer - cleaned data" },
+    @{ name = "gold"; comment = "Gold layer - business-ready data" }
 )
 
-foreach ($schemaConfig in $schemas) {
-    $fullSchemaName = "$($schemaConfig.catalog).$($schemaConfig.schema)"
-    
-    $schemaPayload = @{
-        name = $schemaConfig.schema
-        catalog_name = $schemaConfig.catalog
-        comment = $schemaConfig.comment
-    } | ConvertTo-Json
-    
-    try {
-        Write-Output "Creating schema: $fullSchemaName..."
-        
-        Invoke-RestMethod -Uri "${WorkspaceUrl}/api/2.0/unity-catalog/schemas" `
-            -Method POST `
-            -Headers $headers `
-            -Body $schemaPayload `
-            -ErrorAction Stop
-        
-        Write-Output "✓ Schema created: $fullSchemaName"
-    }
-    catch {
-        if ($_.Exception.Response.StatusCode -eq 400 -and $_ -match "already exists") {
-            Write-Output "ℹ Schema already exists: $fullSchemaName"
+foreach ($catalogName in $catalogNames) {
+    foreach ($schema in $schemaNames) {
+        $fullSchemaName = "$catalogName.$($schema.name)"
+
+        $schemaPayload = @{
+            name = $schema.name
+            catalog_name = $catalogName
+            comment = $schema.comment
+        } | ConvertTo-Json
+
+        try {
+            Write-Output "Creating schema: $fullSchemaName..."
+
+            Invoke-RestMethod -Uri "${WorkspaceUrl}/api/2.0/unity-catalog/schemas" `
+                -Method POST `
+                -Headers $headers `
+                -Body $schemaPayload `
+                -ErrorAction Stop
+
+            Write-Output "✓ Schema created: $fullSchemaName"
         }
-        else {
-            Write-Output "ℹ Schema creation skipped: $fullSchemaName"
+        catch {
+            if ($_.Exception.Response.StatusCode -eq 400 -and $_ -match "already exists") {
+                Write-Output "ℹ Schema already exists: $fullSchemaName"
+            }
+            else {
+                Write-Output "ℹ Schema creation skipped: $fullSchemaName"
+            }
         }
     }
 }

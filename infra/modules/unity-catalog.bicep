@@ -1,10 +1,6 @@
 // Unity Catalog Configuration Module
-// Uses Databricks REST API via deployment script to configure:
-// - Metastore (storage root)
-// - External locations
-// - Catalogs
-// - Schemas
-// - Grants and permissions
+// Uses Access Connector managed identity for secure storage access
+// No shared keys required
 
 param location string
 param projectName string
@@ -18,19 +14,21 @@ param tags object
 // Variables
 var deploymentScriptName = 'deploy-unity-catalog-${projectName}-${environmentName}'
 var metastoreName = 'metastore-${projectName}-${environmentName}'
-var catalogNames = [
-  '${environmentName}_lob_team_1'
-  '${environmentName}_lob_team_2'
-  '${environmentName}_lob_team_3'
-]
-var schemaNames = [
-  'bronze'
-  'silver'
-  'gold'
-]
+
+// ========== Access Connector (Managed Identity) ==========
+// This provides secure authentication to storage without shared keys
+module accessConnector 'access-connector.bicep' = {
+  name: 'access-connector-${projectName}-${environmentName}'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    storageAccountName: storageAccountName
+    tags: tags
+  }
+}
 
 // ========== Managed Identity for Deployment Script ==========
-// This identity will be used to authenticate with Databricks API
 resource deploymentScriptIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: 'uai-unity-catalog-${projectName}-${environmentName}'
   location: location
@@ -52,8 +50,8 @@ resource unityCatalogDeploymentScript 'Microsoft.Resources/deploymentScripts@202
   properties: {
     azPowerShellVersion: '11.0'
     timeout: 'PT1H'
-    arguments: '-WorkspaceUrl "${databricksWorkspaceUrl}" -WorkspaceId "${databricksWorkspaceId}" -StorageAccountName "${storageAccountName}" -StorageContainerName "${storageContainerName}" -MetastoreName "${metastoreName}" -ProjectName "${projectName}" -Environment "${environmentName}"'
-    scriptContent: loadTextContent('scripts/setup-unity-catalog.ps1')
+    arguments: '-WorkspaceUrl "${databricksWorkspaceUrl}" -WorkspaceId "${databricksWorkspaceId}" -StorageAccountName "${storageAccountName}" -StorageContainerName "${storageContainerName}" -MetastoreName "${metastoreName}" -ProjectName "${projectName}" -Environment "${environmentName}" -Location "${location}" -AccessConnectorId "${accessConnector.outputs.accessConnectorId}"'
+    scriptContent: loadTextContent('scripts/unity-catalog-autoconfigure.ps1')
     cleanupPreference: 'OnSuccess'
     retentionInterval: 'PT1H'
   }
@@ -61,6 +59,5 @@ resource unityCatalogDeploymentScript 'Microsoft.Resources/deploymentScripts@202
 
 // ========== Outputs ==========
 output metastoreName string = metastoreName
-output catalogNames array = catalogNames
-output schemaNames array = schemaNames
+output accessConnectorId string = accessConnector.outputs.accessConnectorId
 output metastoreId string = unityCatalogDeploymentScript.properties.outputs.metastoreId ?? ''

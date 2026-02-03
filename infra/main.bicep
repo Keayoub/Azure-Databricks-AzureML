@@ -84,6 +84,7 @@ module databricks 'modules/databricks.bicep' = {
     vnetId: networking.outputs.vnetId
     privateSubnetName: networking.outputs.databricksPrivateSubnetName
     publicSubnetName: networking.outputs.databricksPublicSubnetName
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
   }
 }
@@ -131,6 +132,16 @@ module containerRegistry 'modules/acr.bicep' = {
   }
 }
 
+// ========== Azure ML Private DNS Zone ==========
+module azuremlDns 'modules/azureml-dns.bicep' = if (deployAzureML || deployAIFoundry) {
+  scope: resourceGroup
+  name: 'azureml-dns'
+  params: {
+    vnetId: networking.outputs.vnetId
+    tags: tags
+  }
+}
+
 // ========== Azure ML Workspace ==========
 module azureML 'modules/azureml.bicep' = if (deployAzureML) {
   scope: resourceGroup
@@ -139,12 +150,12 @@ module azureML 'modules/azureml.bicep' = if (deployAzureML) {
     location: location
     projectName: projectName
     environmentName: environmentName
-    storageAccountId: storage.outputs.storageAccountId
+    storageAccountId: storage.outputs.mlStorageAccountId
     keyVaultId: keyVault.outputs.keyVaultId
     containerRegistryId: containerRegistry.outputs.acrId
-    vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     computeSubnetId: networking.outputs.azureMLComputeSubnetId
+    privateDnsZoneId: azuremlDns!.outputs.privateDnsZoneId
     tags: tags
   }
 }
@@ -157,11 +168,11 @@ module aiFoundry 'modules/ai-foundry.bicep' = if (deployAIFoundry) {
     location: location
     projectName: projectName
     environmentName: environmentName
-    storageAccountId: storage.outputs.storageAccountId
+    storageAccountId: storage.outputs.mlStorageAccountId
     keyVaultId: keyVault.outputs.keyVaultId
     containerRegistryId: containerRegistry.outputs.acrId
-    vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    privateDnsZoneId: azuremlDns!.outputs.privateDnsZoneId
     tags: tags
   }
 }

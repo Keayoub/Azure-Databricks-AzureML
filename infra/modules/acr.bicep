@@ -27,7 +27,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-11-01-pr
     anonymousPullEnabled: false // Disable anonymous pull
     publicNetworkAccess: 'Disabled'
     networkRuleBypassOptions: 'AzureServices'
-    zoneRedundancy: 'Enabled'
+    zoneRedundancy: 'Disabled'
     encryption: {
       status: 'disabled' // Can be enabled with customer-managed keys
     }
@@ -48,8 +48,7 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-11-01-pr
         status: 'enabled'
       }
       softDeletePolicy: {
-        retentionDays: 7
-        status: 'enabled'
+        status: 'disabled'
       }
     }
   }

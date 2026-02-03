@@ -10,8 +10,8 @@ param environmentName string
 param storageAccountId string
 param keyVaultId string
 param containerRegistryId string
-param vnetId string
 param privateEndpointSubnetId string
+param privateDnsZoneId string
 param tags object
 
 var hubName = 'aihub-${projectName}-${environmentName}'
@@ -64,32 +64,13 @@ resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
 }
 
 // Assign Key Vault Secrets User role to AI Hub
-resource keyVaultSecretsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: keyVault
-  name: guid(keyVaultId, aiHub.id, 'KeyVaultSecretsUser')
+  name: guid(keyVaultId, aiHub.id, 'KeyVaultAdmin')
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86a0e88') // Key Vault Secrets User
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
     principalId: aiHub.identity.principalId
     principalType: 'ServicePrincipal'
-  }
-}
-
-// ========== Private DNS Zone ==========
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink.api.azureml.ms'
-  location: 'global'
-  tags: tags
-}
-
-resource dnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  parent: privateDnsZone
-  name: 'aihub-dns-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnetId
-    }
   }
 }
 
@@ -124,7 +105,7 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: privateDnsZone.id
+          privateDnsZoneId: privateDnsZoneId
         }
       }
     ]

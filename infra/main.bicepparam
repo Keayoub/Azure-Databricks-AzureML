@@ -17,7 +17,7 @@ param aksNodeCount = 3
 
 // Tags
 param tags = {
-  Environment: 'dev'
-  Project: 'secure-databricks-azureml'
+  Environment: environmentName
+  Project: projectName
   ManagedBy: 'Bicep'
 }
