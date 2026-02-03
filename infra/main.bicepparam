@@ -2,7 +2,7 @@ using './main.bicep'
 
 // Environment configuration
 param environmentName = 'dev'
-param location = 'eastus'
+param location = 'canadaeast'
 param projectName = 'secure-db'
 
 // Admin configuration - CHANGE THIS TO YOUR OBJECT ID

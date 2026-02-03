@@ -4,24 +4,30 @@ This guide explains how the Unity Catalog is configured in the Bicep-based deplo
 
 ## Overview
 
-Instead of using Terraform after Bicep deployment, we've implemented **Unity Catalog configuration directly in Bicep** using Azure Deployment Scripts. This keeps everything in one IaC language and provides a complete, automated setup.
+The deployment automatically configures Unity Catalog with a **medallion architecture** organized by **line of business (LoB) teams** across different **environments** (dev, QA, prod).
 
-## Architecture
+## Data Structure
 
 ```
-Bicep Deployment
-    ↓
-Databricks Workspace (Premium SKU)
-    ↓
-Unity Catalog Module (deployment script)
-    ├── Uses managed identity for authentication
-    ├── Calls Databricks REST API
-    └── Configures:
-        ├── Metastore (storage root)
-        ├── External locations
-        ├── Catalogs (raw_data, processed_data, analytics)
-        ├── Schemas (bronze, silver, gold, reports, ml_features)
-        └── Delta Sharing (enabled)
+Metastore (1 per region - Canada East)
+    ├── dev_lob_team_1
+    │     ├── bronze (raw incoming data)
+    │     ├── silver (cleaned and validated data)
+    │     └── gold (business-ready data)
+    ├── dev_lob_team_2
+    │     ├── bronze
+    │     ├── silver
+    │     └── gold
+    ├── dev_lob_team_3
+    │     ├── bronze
+    │     ├── silver
+    │     └── gold
+    ├── qa_lob_team_1 (when environment = qa)
+    ├── qa_lob_team_2
+    ├── qa_lob_team_3
+    ├── prod_lob_team_1 (when environment = prod)
+    ├── prod_lob_team_2
+    └── prod_lob_team_3
 ```
 
 ## Components
@@ -32,7 +38,7 @@ Unity Catalog Module (deployment script)
 Creates a deployment script resource that:
 - Uses managed identity for secure authentication
 - Calls the Databricks REST API v2.0
-- Configures metastore, external locations, catalogs, and schemas
+- Configures metastore, external locations, and catalogs with schemas
 - Enables Delta Sharing
 
 ### 2. Configuration PowerShell Script
@@ -44,10 +50,17 @@ Performs these operations:
 3. **Assign Metastore**: Connects metastore to workspace
 4. **Create Storage Credential**: Configures storage access
 5. **Create External Location**: Sets up ADLS Gen2 external location
-6. **Create Catalogs**: Creates three default catalogs:
-   - `raw_data` - Bronze layer (raw incoming data)
-   - `processed_data` - Silver/Gold layers (cleaned and business data)
-   - `analytics` - Reports and ML features
+6. **Create Catalogs**: Creates three catalogs per environment per LoB team
+   - `{environment}_lob_team_1` - First line of business catalog
+   - `{environment}_lob_team_2` - Second line of business catalog
+   - `{environment}_lob_team_3` - Third line of business catalog
+
+### 3. Schema Organization
+Within each catalog, three schemas implement the medallion architecture:
+
+- **bronze**: Raw data layer (landing zone for incoming data)
+- **silver**: Validated and cleaned data layer (data quality applied)
+- **gold**: Business-ready data layer (aggregated and optimized for analytics)
 7. **Create Schemas**: Creates organized schemas within each catalog:
    - `raw_data.bronze` - Raw ingestion layer
    - `processed_data.silver` - Cleaned and standardized data

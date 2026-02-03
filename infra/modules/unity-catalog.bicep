@@ -21,9 +21,14 @@ param tags object
 var deploymentScriptName = 'deploy-unity-catalog-${projectName}-${environmentName}'
 var metastoreName = 'metastore-${projectName}-${environmentName}'
 var catalogNames = [
-  'raw_data'
-  'processed_data'
-  'analytics'
+  '${environmentName}_lob_team_1'
+  '${environmentName}_lob_team_2'
+  '${environmentName}_lob_team_3'
+]
+var schemaNames = [
+  'bronze'
+  'silver'
+  'gold'
 ]
 
 // ========== Managed Identity for Deployment Script ==========
@@ -58,6 +63,6 @@ resource unityCatalogDeploymentScript 'Microsoft.Resources/deploymentScripts@202
 
 // ========== Outputs ==========
 output metastoreName string = metastoreName
-output metastoreId string = unityCatalogDeploymentScript.properties.outputs.metastoreId ?? ''
 output catalogNames array = catalogNames
-output deploymentScriptStatus string = unityCatalogDeploymentScript.properties.status
+output schemaNames array = schemaNames
+output metastoreId string = unityCatalogDeploymentScript.properties.outputs.metastoreId ?? ''
