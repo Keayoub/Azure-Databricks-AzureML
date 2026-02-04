@@ -3,7 +3,7 @@ using './main.bicep'
 // Environment configuration
 param environmentName = 'dev'
 param location = 'canadaeast'
-param projectName = 'dbxamlfoundry'
+param projectName = 'dbxaml'
 
 // Admin configuration - CHANGE THIS TO YOUR OBJECT ID
 param adminObjectId = '' // Run: az ad signed-in-user show --query id -o tsv
