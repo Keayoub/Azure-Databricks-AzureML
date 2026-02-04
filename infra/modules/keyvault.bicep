@@ -7,7 +7,7 @@
 param location string
 param projectName string
 param environmentName string
-param adminObjectId string
+param adminObjectId string = ''
 param vnetId string
 param privateEndpointSubnetId string
 param tags object
@@ -40,8 +40,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
   }
 }
 
-// Assign Key Vault Administrator role to admin
-resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+// Assign Key Vault Administrator role to admin (only if adminObjectId is provided)
+resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(adminObjectId)) {
   scope: keyVault
   name: guid(keyVault.id, adminObjectId, 'KeyVaultAdministrator')
   properties: {

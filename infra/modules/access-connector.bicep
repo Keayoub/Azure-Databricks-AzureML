@@ -5,15 +5,15 @@
 param location string
 param projectName string
 param environmentName string
-param storageAccountName string
 param tags object
 
 var accessConnectorName = 'ac-${projectName}-${environmentName}'
 
 // Reference existing storage account in the same resource group
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
-  name: storageAccountName
-}
+// (Not currently used since role assignment is commented out, but kept for reference)
+// resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+//   name: storageAccountName
+// }
 
 // ========== Access Connector (Managed Identity) ==========
 // Created in the same resource group, acts as system-assigned managed identity for Unity Catalog
@@ -28,7 +28,15 @@ resource accessConnector 'Microsoft.Databricks/accessConnectors@2023-05-01' = {
 }
 
 // ========== Grant Storage Permissions ==========
-// Give Access Connector Storage Blob Data Contributor role
+// NOTE: Role assignment may fail if principalId is not immediately available.
+// If deployment fails with InvalidPrincipalId, assign this manually:
+// az role assignment create --role "Storage Blob Data Contributor" \
+//   --assignee-object-id <accessConnectorPrincipalId> \
+//   --scope /subscriptions/<subId>/resourceGroups/<rgName>/providers/Microsoft.Storage/storageAccounts/<storageName> \
+//   --assignee-principal-type ServicePrincipal
+
+// Commented out to avoid InvalidPrincipalId errors
+/*
 resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: storageAccount
   name: guid(storageAccount.id, accessConnector.id, 'StorageBlobDataContributor')
@@ -38,6 +46,7 @@ resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
     principalType: 'ServicePrincipal'
   }
 }
+*/
 
 // ========== Outputs ==========
 output accessConnectorId string = accessConnector.id

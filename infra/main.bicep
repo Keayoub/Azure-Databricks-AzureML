@@ -199,10 +199,6 @@ module unityCatalog 'modules/unity-catalog.bicep' = if (enableUnityCatalog) {
     location: location
     projectName: projectName
     environmentName: environmentName
-    databricksWorkspaceUrl: databricks.outputs.workspaceUrl
-    databricksWorkspaceId: databricks.outputs.workspaceId
-    storageAccountName: storage.outputs.storageAccountName
-    storageContainerName: 'unity-catalog'
     tags: tags
   }
 }

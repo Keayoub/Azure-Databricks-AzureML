@@ -33,47 +33,27 @@ Metastore (1 per region - Canada East)
 ## Components
 
 ### 1. Unity Catalog Bicep Module
-**File**: `infra/modules/unity-catalog.bicep`
 
-Creates a deployment script resource that:
-- Uses managed identity for secure authentication
-- Calls the Databricks REST API v2.0
-- Configures metastore, external locations, and catalogs with schemas
-- Enables Delta Sharing
+The deployment automatically configures Unity Catalog with a **medallion architecture** organized by **line of business (LoB) teams** across different **environments** (dev, QA, prod).
 
 ### 2. Configuration PowerShell Script
-**File**: `infra/modules/scripts/setup-unity-catalog.ps1`
 
-Performs these operations:
 1. **Get Databricks Token**: Uses managed identity to authenticate with Databricks API
-2. **Create Metastore**: Sets up Unity Catalog metastore with ADLS Gen2 storage root
-3. **Assign Metastore**: Connects metastore to workspace
-4. **Create Storage Credential**: Configures storage access
-5. **Create External Location**: Sets up ADLS Gen2 external location
-6. **Create Catalogs**: Creates three catalogs per environment per LoB team
-   - `{environment}_lob_team_1` - First line of business catalog
-   - `{environment}_lob_team_2` - Second line of business catalog
-   - `{environment}_lob_team_3` - Third line of business catalog
 
 ### 3. Schema Organization
-Within each catalog, three schemas implement the medallion architecture:
 
-- **bronze**: Raw data layer (landing zone for incoming data)
-- **silver**: Validated and cleaned data layer (data quality applied)
 - **gold**: Business-ready data layer (aggregated and optimized for analytics)
+
 7. **Create Schemas**: Creates organized schemas within each catalog:
-   - `raw_data.bronze` - Raw ingestion layer
-   - `processed_data.silver` - Cleaned and standardized data
-   - `processed_data.gold` - Business-ready data
-   - `analytics.reports` - Analytics and dashboards
-   - `analytics.ml_features` - Machine learning features
+
 8. **Enable Delta Sharing**: Activates Delta Sharing on the metastore
 
 ## Deployment Flow
 
 ### Step 1: Deploy Bicep Template
+
+```
 ```bash
-azd provision
 ```
 
 This deploys:
@@ -110,116 +90,21 @@ Storage Account: st{project}{env}{hash}
 ```
 
 ### Catalog Hierarchy
-```
-Metastore
-├── raw_data (External Catalog)
-│   └── bronze (Schema - raw data from sources)
-├── processed_data (External Catalog)
-│   ├── silver (Schema - cleaned and deduplicated)
-│   └── gold (Schema - aggregated business data)
-└── analytics (External Catalog)
-    ├── reports (Schema - aggregated analytics)
-    └── ml_features (Schema - ML feature engineering)
-```
+
+- **gold**: Business-ready data layer (aggregated and optimized for analytics)
 
 ### Delta Sharing Configuration
-- **Status**: Enabled on metastore
-- **Scope**: ALL (supports both open and Databricks-to-Databricks sharing)
-- **Use cases**:
-  - Share analytics with external partners
-  - Share data between Databricks accounts
-  - Create data marketplace products
-
-## Required Parameters
-
-Update `infra/main.bicepparam` with:
 
 ```bicep
 // Enable Unity Catalog configuration
-param enableUnityCatalog = true
-
-// Databricks workspace parameters
-param enableDeltaSharing = true  // Enables Delta Sharing on metastore
-
-// Storage and admin
-param adminObjectId = '<your-object-id>'  // For RBAC assignments
 ```
 
-## Managed Identity Configuration
+### Verify Table
 
-The deployment script uses a **User-Assigned Managed Identity** for authentication:
-
-1. **Identity Creation**: Bicep creates `uai-unity-catalog-{project}-{environment}`
-2. **Token Acquisition**: Script uses managed identity to get Databricks API token
-3. **Permissions**: Identity needs:
-   - Contributor role on Databricks workspace
-   - Storage Blob Data Contributor on storage account
-
-```bash
-# Verify managed identity was created
-az identity list -g <resource-group> -o table
-
-# Check role assignments
-az role assignment list -g <resource-group> --output table
-```
-
-## Post-Deployment Verification
-
-### 1. Verify Metastore Creation
-In Databricks workspace:
-
-```sql
--- List metastores
-SELECT * FROM system.information_schema.metastores;
-
--- List catalogs
-SELECT * FROM system.information_schema.catalogs;
-
--- List schemas
-SELECT * FROM system.information_schema.schemata;
-```
-
-### 2. Create Sample Table
-```sql
-CREATE TABLE IF NOT EXISTS raw_data.bronze.sample_events (
-  event_id STRING,
-  event_timestamp TIMESTAMP,
-  event_type STRING,
-  user_id STRING
-)
-USING DELTA
-COMMENT "Sample events table";
-
--- Verify table
-SELECT * FROM raw_data.bronze.sample_events;
-```
-
-### 3. Test Delta Sharing
-```python
-# List available shares
-shares = spark.sql("SHOW SHARES").collect()
-print(f"Available shares: {len(shares)}")
-
-# Enable notebook sharing
-spark.sql("CREATE SHARE analytics_share")
-spark.sql("ALTER SHARE analytics_share ADD TABLE analytics.reports.*")
-```
-
-### 4. Check Deployment Script Logs
-```bash
-# View deployment script execution logs
-az deployment group show \
-  --resource-group <resource-group> \
-  --name <deployment-name> \
-  --query "properties.outputs" -o json
-
-# View PowerShell script output
-az resource list -g <resource-group> --resource-type Microsoft.Resources/deploymentScripts -o table
-```
-
-## Customization
+### Check Deployment Script Logs
 
 ### Modify Catalog Names
+
 Edit `infra/modules/unity-catalog.bicep`:
 
 ```bicep
