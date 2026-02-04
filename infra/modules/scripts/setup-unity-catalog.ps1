@@ -36,20 +36,54 @@ catch {
 # Set environment variables for Databricks CLI authentication
 $env:DATABRICKS_HOST = $WorkspaceUrl.TrimEnd('/')
 
-# Get token from managed identity (Azure MSI)
+# Try managed identity first (for Azure Cloud Shell / Azure VMs)
+$tokenObtained = $false
 try {
     $response = Invoke-RestMethod `
         -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2017-09-01&resource=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d" `
         -Method GET `
         -Headers @{ "Metadata" = "true" } `
+        -TimeoutSec 5 `
         -ErrorAction Stop
     
     $env:DATABRICKS_TOKEN = $response.access_token
+    $tokenObtained = $true
     Write-Output "✓ Configured Databricks CLI with managed identity token"
 }
 catch {
-    Write-Error "Failed to obtain Databricks token from managed identity: $_"
-    exit 1
+    Write-Output "ℹ Managed identity not available (running locally)"
+}
+
+# If managed identity fails, try using existing Azure CLI token
+if (-not $tokenObtained) {
+    try {
+        Write-Output "Attempting to obtain Databricks token using Azure CLI..."
+        
+        # Get Azure access token for Databricks
+        $azToken = az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv 2>&1
+        
+        if ($LASTEXITCODE -eq 0 -and $azToken) {
+            $env:DATABRICKS_TOKEN = $azToken
+            $tokenObtained = $true
+            Write-Output "✓ Configured Databricks CLI with Azure CLI token"
+        }
+    }
+    catch {
+        Write-Output "ℹ Azure CLI token not available"
+    }
+}
+
+# If both fail, prompt for manual token
+if (-not $tokenObtained) {
+    Write-Output "`n⚠ Automatic authentication failed. Please provide a Databricks Personal Access Token (PAT)."
+    Write-Output "To create a PAT:"
+    Write-Output "  1. Go to: $WorkspaceUrl"
+    Write-Output "  2. Click Settings → User Settings → Access Tokens"
+    Write-Output "  3. Generate new token and copy it"
+    Write-Output ""
+    $patToken = Read-Host "Enter your Databricks PAT token" -AsSecureString
+    $env:DATABRICKS_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($patToken))
+    Write-Output "✓ Configured Databricks CLI with provided PAT token"
 }
 
 # ========== Create Metastore ==========
