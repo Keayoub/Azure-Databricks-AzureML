@@ -17,16 +17,8 @@ param tags object
 var hubName = 'aihub-${environmentName}-${projectName}'
 var privateEndpointName = 'pe-${environmentName}-${projectName}-aihub'
 
-var storageAccountName = split(storageAccountId, '/')[8]
-var keyVaultName = split(keyVaultId, '/')[8]
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVaultName
-}
+// Note: We don't declare 'existing' resources here because they're in a different RG
+// Storage, Key Vault, and Container Registry are referenced by their full resource IDs
 
 // ========== Azure AI Hub ==========
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
@@ -52,27 +44,8 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   }
 }
 
-// Assign Storage Blob Data Reader role to AI Hub
-resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: storageAccount
-  name: guid(storageAccountId, aiHub.id, 'StorageBlobDataReader')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1') // Storage Blob Data Reader
-    principalId: aiHub.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Assign Key Vault Secrets User role to AI Hub
-resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVault
-  name: guid(keyVaultId, aiHub.id, 'KeyVaultAdmin')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
-    principalId: aiHub.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// Note: RBAC role assignments are handled in main.bicep at the subscription scope
+// to allow cross-resource group assignments
 
 // ========== Private Endpoint ==========
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
@@ -115,3 +88,4 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
 // ========== Outputs ==========
 output hubName string = aiHub.name
 output hubId string = aiHub.id
+output hubPrincipalId string = aiHub.identity.principalId

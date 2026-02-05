@@ -22,14 +22,10 @@ var privateEndpointName = 'pe-${environmentName}-${projectName}-aml'
 
 var storageAccountName = split(storageAccountId, '/')[8]
 var keyVaultName = split(keyVaultId, '/')[8]
+var containerRegistryName = split(containerRegistryId, '/')[8]
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
-  name: keyVaultName
-}
+// Note: We don't declare 'existing' resources here because they're in a different RG
+// Instead, we reference them by their full resource ID in RBAC assignments below
 
 // ========== Application Insights ==========
 resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
@@ -70,27 +66,8 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   }
 }
 
-// Assign Storage Blob Data Reader role to workspace
-resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: storageAccount
-  name: guid(storageAccountId, workspace.id, 'StorageBlobDataReader')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1') // Storage Blob Data Reader
-    principalId: workspace.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Assign Key Vault Administrator role to workspace for secret access
-resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVault
-  name: guid(keyVaultId, workspace.id, 'KeyVaultAdmin')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
-    principalId: workspace.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// Note: RBAC role assignments are handled in main.bicep at the subscription scope
+// to allow cross-resource group assignments
 
 // ========== Private Endpoint ==========
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
@@ -163,4 +140,5 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
 // ========== Outputs ==========
 output workspaceName string = workspace.name
 output workspaceId string = workspace.id
+output workspacePrincipalId string = workspace.identity.principalId
 output applicationInsightsId string = applicationInsights.id

@@ -404,6 +404,53 @@ module cosmosDb 'components/cosmos-db/cosmos-db.bicep' = if (deployCosmosDB) {
   }
 }
 
+// ========== Cross-Resource Group RBAC Assignments ==========
+// These are handled at subscription scope to allow access across resource groups
+
+// Azure ML Workspace - Storage Blob Data Reader (cross-RG via module)
+module amlStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aml-storage-blob-role'
+  params: {
+    principalId: azureML!.outputs.workspacePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure ML Workspace - Key Vault Administrator (cross-RG via module)
+module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aml-keyvault-role'
+  params: {
+    principalId: azureML!.outputs.workspacePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// AI Foundry Hub - Storage Blob Data Reader (cross-RG via module)
+module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aihub-storage-blob-role'
+  params: {
+    principalId: aiFoundry!.outputs.hubPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// AI Foundry Hub - Key Vault Administrator (cross-RG via module)
+module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aihub-keyvault-role'
+  params: {
+    principalId: aiFoundry!.outputs.hubPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // ========== Outputs ==========
 output sharedResourceGroupName string = sharedResourceGroup.name
 output databricksResourceGroupName string = databricksResourceGroup.name
