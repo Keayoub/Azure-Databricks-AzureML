@@ -1,10 +1,8 @@
 // Main Bicep file for Secure Azure Databricks, Azure ML, and AI Foundry deployment
-// This template deploys a complete secure data platform with:
-// - Azure Databricks with Unity Catalog, VNet injection, and data exfiltration protection
-// - Azure ML workspace with network isolation
-// - AI Foundry hub with network integration
-// - Optional AKS cluster for Azure ML model serving
-// - Full network isolation with private endpoints
+// Organized into 3 separate resource groups:
+// 1. Shared Services (VNet, Storage, Key Vault, ACR)
+// 2. Databricks Infrastructure
+// 3. AI Platform (Azure ML, AI Foundry)
 
 targetScope = 'subscription'
 
@@ -46,23 +44,37 @@ param tags object = {
   Environment: environmentName
   Project: projectName
   ManagedBy: 'Bicep'
-  Purpose: 'SecureDataPlatform'
 }
 
 // ========== Variables ==========
-var uniqueSuffix = uniqueString(subscription().id, projectName, location)
-var resourceGroupName = 'rg-${projectName}-${environmentName}-${uniqueSuffix}'
+var sharedRgName = 'rg-${projectName}-shared-${environmentName}'
+var databricksRgName = 'rg-${projectName}-databricks-${environmentName}'
+var aiPlatformRgName = 'rg-${projectName}-ai-platform-${environmentName}'
 
-// ========== Resource Group ==========
-resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
-  name: resourceGroupName
+// ========== Resource Groups ==========
+resource sharedResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: sharedRgName
   location: location
-  tags: tags
+  tags: union(tags, { Purpose: 'SharedServices' })
 }
 
-// ========== Networking Infrastructure ==========
+resource databricksResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: databricksRgName
+  location: location
+  tags: union(tags, { Purpose: 'DatabricksInfra' })
+}
+
+resource aiPlatformResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: aiPlatformRgName
+  location: location
+  tags: union(tags, { Purpose: 'AIPlatform' })
+}
+
+// ========== SHARED SERVICES RESOURCE GROUP ==========
+
+// Networking Infrastructure
 module networking 'modules/networking.bicep' = {
-  scope: resourceGroup
+  scope: sharedResourceGroup
   name: 'networking-deployment'
   params: {
     location: location
@@ -73,9 +85,79 @@ module networking 'modules/networking.bicep' = {
   }
 }
 
-// ========== Azure Databricks with Security Features ==========
+// Storage Account for Unity Catalog and Azure ML (STAYS IN SHARED RG)
+module storage 'modules/storage.bicep' = {
+  scope: sharedResourceGroup
+  name: 'storage-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// Key Vault
+module keyVault 'modules/keyvault.bicep' = {
+  scope: sharedResourceGroup
+  name: 'keyvault-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    adminObjectId: adminObjectId
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// Container Registry
+module containerRegistry 'modules/acr.bicep' = {
+  scope: sharedResourceGroup
+  name: 'acr-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// Access Connector (for Unity Catalog - STAYS IN SHARED RG)
+module accessConnector 'modules/access-connector.bicep' = if (enableUnityCatalog) {
+  scope: sharedResourceGroup
+  name: 'access-connector-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    tags: tags
+  }
+}
+
+// AKS Cluster (optional)
+module aks 'modules/aks.bicep' = if (deployAKS) {
+  scope: sharedResourceGroup
+  name: 'aks-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    aksSubnetId: networking.outputs.aksSubnetId
+    nodeCount: aksNodeCount
+    tags: tags
+  }
+}
+
+// ========== DATABRICKS RESOURCE GROUP ==========
+
 module databricks 'modules/databricks.bicep' = {
-  scope: resourceGroup
+  scope: databricksResourceGroup
   name: 'databricks-deployment'
   params: {
     location: location
@@ -89,52 +171,11 @@ module databricks 'modules/databricks.bicep' = {
   }
 }
 
-// ========== Storage Account for Unity Catalog and Azure ML ==========
-module storage 'modules/storage.bicep' = {
-  scope: resourceGroup
-  name: 'storage-deployment'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    vnetId: networking.outputs.vnetId
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    tags: tags
-  }
-}
+// ========== AI PLATFORM RESOURCE GROUP ==========
 
-// ========== Azure Key Vault ==========
-module keyVault 'modules/keyvault.bicep' = {
-  scope: resourceGroup
-  name: 'keyvault-deployment'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    adminObjectId: adminObjectId
-    vnetId: networking.outputs.vnetId
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    tags: tags
-  }
-}
-
-// ========== Azure Container Registry ==========
-module containerRegistry 'modules/acr.bicep' = {
-  scope: resourceGroup
-  name: 'acr-deployment'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    vnetId: networking.outputs.vnetId
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    tags: tags
-  }
-}
-
-// ========== Azure ML Private DNS Zone ==========
+// Azure ML Private DNS Zone
 module azuremlDns 'modules/azureml-dns.bicep' = if (deployAzureML || deployAIFoundry) {
-  scope: resourceGroup
+  scope: aiPlatformResourceGroup
   name: 'azureml-dns'
   params: {
     vnetId: networking.outputs.vnetId
@@ -142,9 +183,9 @@ module azuremlDns 'modules/azureml-dns.bicep' = if (deployAzureML || deployAIFou
   }
 }
 
-// ========== Azure ML Workspace ==========
+// Azure ML Workspace
 module azureML 'modules/azureml.bicep' = if (deployAzureML) {
-  scope: resourceGroup
+  scope: aiPlatformResourceGroup
   name: 'azureml-deployment'
   params: {
     location: location
@@ -160,9 +201,9 @@ module azureML 'modules/azureml.bicep' = if (deployAzureML) {
   }
 }
 
-// ========== AI Foundry Hub ==========
+// AI Foundry Hub
 module aiFoundry 'modules/ai-foundry.bicep' = if (deployAIFoundry) {
-  scope: resourceGroup
+  scope: aiPlatformResourceGroup
   name: 'ai-foundry-deployment'
   params: {
     location: location
@@ -177,41 +218,31 @@ module aiFoundry 'modules/ai-foundry.bicep' = if (deployAIFoundry) {
   }
 }
 
-// ========== AKS Cluster for Azure ML Model Serving ==========
-module aks 'modules/aks.bicep' = if (deployAKS) {
-  scope: resourceGroup
-  name: 'aks-deployment'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    aksSubnetId: networking.outputs.aksSubnetId
-    nodeCount: aksNodeCount
-    tags: tags
-  }
-}
-
-// ========== Unity Catalog Configuration ==========
-module unityCatalog 'modules/unity-catalog.bicep' = if (enableUnityCatalog) {
-  scope: resourceGroup
-  name: 'unity-catalog-deployment'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    tags: tags
-  }
-}
-
 // ========== Outputs ==========
-output resourceGroupName string = resourceGroup.name
+output sharedResourceGroupName string = sharedResourceGroup.name
+output databricksResourceGroupName string = databricksResourceGroup.name
+output aiPlatformResourceGroupName string = aiPlatformResourceGroup.name
+output sharedResourceGroupId string = sharedResourceGroup.id
+output databricksResourceGroupId string = databricksResourceGroup.id
+output aiPlatformResourceGroupId string = aiPlatformResourceGroup.id
+
+@description('Networking outputs from shared RG')
+output networkingOutputs object = networking.outputs
+
+@description('Storage outputs from shared RG')
+output storageOutputs object = storage.outputs
+
+@description('Key Vault outputs from shared RG')
+output keyVaultOutputs object = keyVault.outputs
+
+@description('Container Registry outputs from shared RG')
+output containerRegistryOutputs object = containerRegistry.outputs
+
+@description('Databricks workspace URL')
 output databricksWorkspaceUrl string = databricks.outputs.workspaceUrl
-output databricksWorkspaceId string = databricks.outputs.workspaceId
-output storageAccountName string = storage.outputs.storageAccountName
-output keyVaultName string = keyVault.outputs.keyVaultName
-output containerRegistryName string = containerRegistry.outputs.acrName
-output azureMLWorkspaceName string = deployAzureML ? azureML!.outputs.workspaceName : 'Not deployed'
-output aiFoundryHubName string = deployAIFoundry ? aiFoundry!.outputs.hubName : 'Not deployed'
-output aksClusterName string = deployAKS ? aks!.outputs.aksClusterName : 'Not deployed'
-output unityCatalogMetastoreName string = 'See deployment logs for Unity Catalog metastore details'
-output vnetName string = networking.outputs.vnetName
+
+@description('Azure ML workspace ID')
+output azureMLWorkspaceId string = deployAzureML ? azureML!.outputs.workspaceId : ''
+
+@description('AI Foundry hub ID')
+output aiFoundryHubId string = deployAIFoundry ? aiFoundry!.outputs.hubId : ''
