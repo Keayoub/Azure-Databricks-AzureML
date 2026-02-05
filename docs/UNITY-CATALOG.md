@@ -44,9 +44,9 @@ The deployment automatically configures Unity Catalog with a **medallion archite
 
 - **gold**: Business-ready data layer (aggregated and optimized for analytics)
 
-7. **Create Schemas**: Creates organized schemas within each catalog:
+1. **Create Schemas**: Creates organized schemas within each catalog:
 
-8. **Enable Delta Sharing**: Activates Delta Sharing on the metastore
+2. **Enable Delta Sharing**: Activates Delta Sharing on the meta store
 
 ## Deployment Flow
 
@@ -57,6 +57,7 @@ The deployment automatically configures Unity Catalog with a **medallion archite
 ```
 
 This deploys:
+
 1. ✅ Networking infrastructure (VNet, subnets, NSGs)
 2. ✅ Storage account (ADLS Gen2)
 3. ✅ Databricks workspace (Premium SKU, VNet-injected)
@@ -65,7 +66,9 @@ This deploys:
 6. ✅ (Optional) AKS cluster
 
 ### Step 2: Unity Catalog Configuration (Automatic)
+
 Once Databricks workspace is ready, the deployment script automatically:
+
 1. Retrieves workspace URL and ID from Bicep outputs
 2. Uses managed identity to get Databricks API token
 3. Creates and configures Unity Catalog metastore
@@ -77,9 +80,10 @@ Once Databricks workspace is ready, the deployment script automatically:
 ## Configuration Details
 
 ### Storage Structure
+
 ```
 Storage Account: st{project}{env}{hash}
-├── Container: unity-catalog (metastore root)
+├── Container: unity-catalog (meta store root)
 │   ├── _delta_log/
 │   ├── .metadata/
 │   └── [catalog-data]/
@@ -122,6 +126,7 @@ $catalogNames = @("your_catalog_1", "your_catalog_2", "your_catalog_3")
 ```
 
 ### Add Custom Schemas
+
 Modify `setup-unity-catalog.ps1`:
 
 ```powershell
@@ -132,6 +137,7 @@ $schemas = @(
 ```
 
 ### Modify Storage Credentials
+
 For different authentication methods:
 
 ```powershell
@@ -149,7 +155,9 @@ For different authentication methods:
 ## Troubleshooting
 
 ### Issue: Deployment Script Fails to Get Token
+
 **Solution**: Verify managed identity has correct permissions
+
 ```bash
 az role assignment create \
   --assignee <managed-identity-id> \
@@ -158,7 +166,9 @@ az role assignment create \
 ```
 
 ### Issue: "Cannot access storage account"
+
 **Solution**: Ensure managed identity has Storage Blob Data Contributor role
+
 ```bash
 az role assignment create \
   --assignee <managed-identity-id> \
@@ -167,12 +177,16 @@ az role assignment create \
 ```
 
 ### Issue: Unity Catalog metastore already exists
+
 **Solution**: Script automatically detects and reuses existing metastore
+
 - Check deployment script output for metastore ID
 - Script is idempotent - can be re-run safely
 
 ### Issue: Schemas or catalogs not created
+
 **Solution**: Check PowerShell script output
+
 ```bash
 # Get deployment script outputs
 az resource show \
@@ -185,18 +199,21 @@ az resource show \
 ## Security Considerations
 
 ### 1. Managed Identity Authentication
+
 - ✅ No credentials in scripts
 - ✅ No personal access tokens needed
 - ✅ Token scoped to specific resource
 - ✅ Automatically rotated by Azure
 
 ### 2. Storage Access
+
 - ✅ Private endpoint for storage account
 - ✅ Only managed identity can access
 - ✅ Network isolation with NSGs
 - ✅ Infrastructure encryption enabled
 
 ### 3. Databricks API Access
+
 - ✅ HTTPS only
 - ✅ Bearer token authentication
 - ✅ Minimal permissions (only Unity Catalog APIs)
@@ -205,11 +222,13 @@ az resource show \
 ## Cost Optimization
 
 ### Deployment Script Costs
+
 - Minimal: Azure Container Instances run only during deployment
 - No persistent costs after deployment completes
 - Logs retained for 1 hour (configurable)
 
 ### Unity Catalog Storage Costs
+
 - Charged at standard ADLS Gen2 rates
 - No additional Unity Catalog licensing
 - Data hot storage: ~$0.02-0.04 per GB/month

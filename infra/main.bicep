@@ -73,7 +73,7 @@ resource aiPlatformResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01'
 // ========== SHARED SERVICES RESOURCE GROUP ==========
 
 // Networking Infrastructure
-module networking 'modules/networking.bicep' = {
+module networking 'components/networking/networking.bicep' = {
   scope: sharedResourceGroup
   name: 'networking-deployment'
   params: {
@@ -86,7 +86,7 @@ module networking 'modules/networking.bicep' = {
 }
 
 // Storage Account for Unity Catalog and Azure ML (STAYS IN SHARED RG)
-module storage 'modules/storage.bicep' = {
+module storage 'components/storage/storage.bicep' = {
   scope: sharedResourceGroup
   name: 'storage-deployment'
   params: {
@@ -100,7 +100,7 @@ module storage 'modules/storage.bicep' = {
 }
 
 // Key Vault
-module keyVault 'modules/keyvault.bicep' = {
+module keyVault 'components/keyvault/keyvault.bicep' = {
   scope: sharedResourceGroup
   name: 'keyvault-deployment'
   params: {
@@ -115,7 +115,7 @@ module keyVault 'modules/keyvault.bicep' = {
 }
 
 // Container Registry
-module containerRegistry 'modules/acr.bicep' = {
+module containerRegistry 'components/acr/acr.bicep' = {
   scope: sharedResourceGroup
   name: 'acr-deployment'
   params: {
@@ -129,7 +129,7 @@ module containerRegistry 'modules/acr.bicep' = {
 }
 
 // Access Connector (for Unity Catalog - STAYS IN SHARED RG)
-module accessConnector 'modules/access-connector.bicep' = if (enableUnityCatalog) {
+module accessConnector 'components/databricks/access-connector.bicep' = if (enableUnityCatalog) {
   scope: sharedResourceGroup
   name: 'access-connector-deployment'
   params: {
@@ -141,7 +141,7 @@ module accessConnector 'modules/access-connector.bicep' = if (enableUnityCatalog
 }
 
 // AKS Cluster (optional)
-module aks 'modules/aks.bicep' = if (deployAKS) {
+module aks 'components/aks/aks.bicep' = if (deployAKS) {
   scope: sharedResourceGroup
   name: 'aks-deployment'
   params: {
@@ -154,9 +154,37 @@ module aks 'modules/aks.bicep' = if (deployAKS) {
   }
 }
 
+// Monitoring (Application Insights & Log Analytics)
+module monitoring 'components/monitoring/monitoring.bicep' = {
+  scope: sharedResourceGroup
+  name: 'monitoring-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    enableApplicationInsights: true
+    enableLogAnalytics: true
+    logRetentionInDays: 30
+    tags: tags
+  }
+}
+
+// Security & RBAC (Managed Identities & Role Templates)
+module securityRbac 'components/security/security-rbac.bicep' = {
+  scope: sharedResourceGroup
+  name: 'security-rbac-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    adminObjectId: adminObjectId
+    tags: tags
+  }
+}
+
 // ========== DATABRICKS RESOURCE GROUP ==========
 
-module databricks 'modules/databricks.bicep' = {
+module databricks 'components/databricks/databricks.bicep' = {
   scope: databricksResourceGroup
   name: 'databricks-deployment'
   params: {
@@ -174,7 +202,7 @@ module databricks 'modules/databricks.bicep' = {
 // ========== AI PLATFORM RESOURCE GROUP ==========
 
 // Azure ML Private DNS Zone
-module azuremlDns 'modules/azureml-dns.bicep' = if (deployAzureML || deployAIFoundry) {
+module azuremlDns 'components/azureml/azureml-dns.bicep' = if (deployAzureML || deployAIFoundry) {
   scope: aiPlatformResourceGroup
   name: 'azureml-dns'
   params: {
@@ -184,7 +212,7 @@ module azuremlDns 'modules/azureml-dns.bicep' = if (deployAzureML || deployAIFou
 }
 
 // Azure ML Workspace
-module azureML 'modules/azureml.bicep' = if (deployAzureML) {
+module azureML 'components/azureml/azureml.bicep' = if (deployAzureML) {
   scope: aiPlatformResourceGroup
   name: 'azureml-deployment'
   params: {
@@ -202,7 +230,7 @@ module azureML 'modules/azureml.bicep' = if (deployAzureML) {
 }
 
 // AI Foundry Hub
-module aiFoundry 'modules/ai-foundry.bicep' = if (deployAIFoundry) {
+module aiFoundry 'components/ai-foundry/ai-foundry.bicep' = if (deployAIFoundry) {
   scope: aiPlatformResourceGroup
   name: 'ai-foundry-deployment'
   params: {
@@ -237,6 +265,12 @@ output keyVaultOutputs object = keyVault.outputs
 
 @description('Container Registry outputs from shared RG')
 output containerRegistryOutputs object = containerRegistry.outputs
+
+@description('Monitoring outputs (Application Insights & Log Analytics)')
+output monitoringOutputs object = monitoring.outputs
+
+@description('Security & RBAC outputs (Managed Identities)')
+output securityRbacOutputs object = securityRbac.outputs
 
 @description('Databricks workspace URL')
 output databricksWorkspaceUrl string = databricks.outputs.workspaceUrl
