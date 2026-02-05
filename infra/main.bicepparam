@@ -13,6 +13,7 @@ param enableUnityCatalog = true
 param deployAzureML = true
 param deployAIFoundry = true
 param deployAKS = false
+param deployACA = false
 param aksNodeCount = 3
 
 // Tags

@@ -31,6 +31,9 @@ param deployAIFoundry bool = true
 @description('Deploy AKS cluster for Azure ML model serving')
 param deployAKS bool = false
 
+@description('Deploy Azure Container Apps environment')
+param deployACA bool = false
+
 @description('AKS node count for model serving')
 @minValue(1)
 @maxValue(10)
@@ -47,9 +50,10 @@ param tags object = {
 }
 
 // ========== Variables ==========
-var sharedRgName = 'rg-${projectName}-shared-${environmentName}'
-var databricksRgName = 'rg-${projectName}-databricks-${environmentName}'
-var aiPlatformRgName = 'rg-${projectName}-ai-platform-${environmentName}'
+var sharedRgName = 'rg-${environmentName}-${projectName}-shared'
+var databricksRgName = 'rg-${environmentName}-${projectName}-databricks'
+var aiPlatformRgName = 'rg-${environmentName}-${projectName}-ai-platform'
+var computeRgName = 'rg-${environmentName}-${projectName}-compute'
 
 // ========== Resource Groups ==========
 resource sharedResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
@@ -68,6 +72,12 @@ resource aiPlatformResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01'
   name: aiPlatformRgName
   location: location
   tags: union(tags, { Purpose: 'AIPlatform' })
+}
+
+resource computeResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: computeRgName
+  location: location
+  tags: union(tags, { Purpose: 'ContainerCompute' })
 }
 
 // ========== SHARED SERVICES RESOURCE GROUP ==========
@@ -140,9 +150,11 @@ module accessConnector 'components/databricks/access-connector.bicep' = if (enab
   }
 }
 
+// ========== COMPUTE RESOURCE GROUP ==========
+
 // AKS Cluster (optional)
 module aks 'components/aks/aks.bicep' = if (deployAKS) {
-  scope: sharedResourceGroup
+  scope: computeResourceGroup
   name: 'aks-deployment'
   params: {
     location: location
@@ -150,6 +162,24 @@ module aks 'components/aks/aks.bicep' = if (deployAKS) {
     environmentName: environmentName
     aksSubnetId: networking.outputs.aksSubnetId
     nodeCount: aksNodeCount
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// Azure Container Apps Environment (optional)
+module containerApps 'components/aca/aca.bicep' = if (deployACA) {
+  scope: computeResourceGroup
+  name: 'aca-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    infrastructureSubnetId: networking.outputs.acaInfrastructureSubnetId
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    appInsightsInstrumentationKey: monitoring.outputs.applicationInsightsInstrumentationKey
     tags: tags
   }
 }
@@ -280,3 +310,9 @@ output azureMLWorkspaceId string = deployAzureML ? azureML!.outputs.workspaceId 
 
 @description('AI Foundry hub ID')
 output aiFoundryHubId string = deployAIFoundry ? aiFoundry!.outputs.hubId : ''
+
+@description('AKS cluster resource ID')
+output aksClusterResourceId string = deployAKS ? aks!.outputs.aksClusterResourceId : ''
+
+@description('Azure Container Apps environment ID')
+output containerAppsEnvironmentId string = deployACA ? containerApps!.outputs.containerAppsEnvironmentId : ''

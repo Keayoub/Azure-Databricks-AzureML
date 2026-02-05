@@ -10,6 +10,7 @@ param projectName string
 param environmentName string
 param tags object
 param deployAKS bool
+param deployAPIM bool = false
 
 // VNet configuration
 var vnetName = 'vnet-${projectName}-${environmentName}'
@@ -28,8 +29,14 @@ var azureMLComputeSubnetPrefix = '10.0.3.0/24'
 var aksSubnetName = 'snet-aks'
 var aksSubnetPrefix = '10.0.4.0/23' // /23 for larger AKS clusters
 
+var acaInfrastructureSubnetName = 'snet-aca-infrastructure'
+var acaInfrastructureSubnetPrefix = '10.0.7.0/23' // /23 minimum required for ACA
+
 var privateEndpointSubnetName = 'snet-private-endpoints'
 var privateEndpointSubnetPrefix = '10.0.6.0/24'
+
+var apimSubnetName = 'snet-apim'
+var apimSubnetPrefix = '10.0.9.0/24' // /24 for APIM (minimum /27 required)
 
 // ========== Network Security Groups ==========
 
@@ -374,6 +381,80 @@ resource privateEndpointNSG 'Microsoft.Network/networkSecurityGroups@2024-01-01'
   }
 }
 
+// NSG for ACA Infrastructure Subnet
+resource acaInfrastructureNSG 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
+  name: 'nsg-${acaInfrastructureSubnetName}'
+  location: location
+  tags: tags
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowAnyHTTPSInbound'
+        properties: {
+          priority: 100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourceAddressPrefix: '*'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '443'
+        }
+      }
+    ]
+  }
+}
+
+// NSG for APIM Subnet
+resource apimNSG 'Microsoft.Network/networkSecurityGroups@2024-01-01' = if (deployAPIM) {
+  name: 'nsg-${apimSubnetName}'
+  location: location
+  tags: tags
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowClientCommunicationToAPIM'
+        properties: {
+          priority: 100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourceAddressPrefix: 'VirtualNetwork'
+          sourcePortRange: '*'
+          destinationAddressPrefix: 'VirtualNetwork'
+          destinationPortRange: '443'
+        }
+      }
+      {
+        name: 'AllowManagementEndpointForPortal'
+        properties: {
+          priority: 110
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourceAddressPrefix: 'ApiManagement'
+          sourcePortRange: '*'
+          destinationAddressPrefix: 'VirtualNetwork'
+          destinationPortRange: '3443'
+        }
+      }
+      {
+        name: 'AllowAzureLoadBalancer'
+        properties: {
+          priority: 120
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourceAddressPrefix: 'AzureLoadBalancer'
+          sourcePortRange: '*'
+          destinationAddressPrefix: 'VirtualNetwork'
+          destinationPortRange: '6390'
+        }
+      }
+    ]
+  }
+}
+
 // ========== Virtual Network ==========
 resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetName
@@ -484,6 +565,43 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
           privateLinkServiceNetworkPolicies: 'Enabled'
         }
       }
+      {
+        name: acaInfrastructureSubnetName
+        properties: {
+          addressPrefix: acaInfrastructureSubnetPrefix
+          networkSecurityGroup: {
+            id: acaInfrastructureNSG.id
+          }
+          delegations: [
+            {
+              name: 'aca-delegation'
+              properties: {
+                serviceName: 'Microsoft.App/environments'
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: apimSubnetName
+        properties: {
+          addressPrefix: apimSubnetPrefix
+          networkSecurityGroup: {
+            id: deployAPIM ? apimNSG.id : privateEndpointNSG.id // Fallback to PE NSG if APIM not deployed
+          }
+          serviceEndpoints: deployAPIM ? [
+            {
+              service: 'Microsoft.Storage'
+            }
+            {
+              service: 'Microsoft.KeyVault'
+            }
+            {
+              service: 'Microsoft.Sql'
+            }
+          ] : []
+        }
+      }
     ]
   }
 }
@@ -496,3 +614,5 @@ output databricksPrivateSubnetName string = databricksPrivateSubnetName
 output azureMLComputeSubnetId string = '${vnet.id}/subnets/${azureMLComputeSubnetName}'
 output aksSubnetId string = '${vnet.id}/subnets/${aksSubnetName}'
 output privateEndpointSubnetId string = '${vnet.id}/subnets/${privateEndpointSubnetName}'
+output acaInfrastructureSubnetId string = '${vnet.id}/subnets/${acaInfrastructureSubnetName}'
+output apimSubnetId string = '${vnet.id}/subnets/${apimSubnetName}'

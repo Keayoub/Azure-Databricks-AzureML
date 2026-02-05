@@ -24,8 +24,8 @@ This guide provides step-by-step instructions for configuring your Azure Databri
 ### Step 1: Get Databricks Workspace Information
 
 ```bash
-# Get your resource group name
-RESOURCE_GROUP=$(az group list --query "[].name" -o tsv | grep "rg-secure-db")
+# Get your resource group name (pattern: rg-{env}-{project}-databricks)
+RESOURCE_GROUP=$(az group list --query "[].name" -o tsv | grep "databricks")
 
 # Get Databricks workspace URL
 WORKSPACE_URL=$(az databricks workspace show \

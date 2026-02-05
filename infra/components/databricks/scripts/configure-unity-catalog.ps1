@@ -18,12 +18,12 @@ Write-Output "========================================"
 # ========== Find Shared Services Resource Group ==========
 if ([string]::IsNullOrEmpty($ResourceGroupName)) {
     Write-Output "`nSearching for Shared Services resource group..."
-    # Look for shared RG with pattern: rg-{projectName}-shared-{environment}
-    # If no projectName provided, search for any -shared- RG
+    # Look for shared RG with pattern: rg-{environment}-{projectName}-shared
+    # If no projectName provided, search for any -shared RG
     
     if (-not [string]::IsNullOrEmpty($ProjectName)) {
-        $pattern = "*-${ProjectName}-shared-${Environment}"
-        $resourceGroups = az group list --query "[?contains(name, '-shared-') && contains(name, '${ProjectName}')].name" -o tsv
+        $pattern = "*${Environment}-${ProjectName}-shared*"
+        $resourceGroups = az group list --query "[?contains(name, '${Environment}-') && contains(name, '${ProjectName}-shared')].name" -o tsv
     }
     else {
         # Search for any shared RG
@@ -31,7 +31,7 @@ if ([string]::IsNullOrEmpty($ResourceGroupName)) {
     }
     
     if ([string]::IsNullOrEmpty($resourceGroups)) {
-        Write-Error "No Shared Services resource group found matching pattern 'rg-{projectName}-shared-{environment}'"
+        Write-Error "No Shared Services resource group found matching pattern 'rg-{environment}-{projectName}-shared'"
         Write-Output "Please run deployment first with: azd provision"
         exit 1
     }
@@ -56,8 +56,8 @@ Write-Output "`n✓ Using Shared Services Resource Group: $ResourceGroupName"
 Write-Output "`nSearching for Databricks workspace (in Databricks RG)..."
 
 # Extract pattern from shared RG name to find Databricks RG
-# Example: rg-dbxaml-shared-dev -> rg-dbxaml-databricks-dev
-$sharedPattern = $ResourceGroupName -replace '-shared-', '-databricks-'
+# Example: rg-dev-dbxaml-shared -> rg-dev-dbxaml-databricks
+$sharedPattern = $ResourceGroupName -replace '-shared', '-databricks'
 $databricksRg = az group list --query "[?name=='$sharedPattern'].name" -o tsv
 
 if ([string]::IsNullOrEmpty($databricksRg)) {
@@ -108,8 +108,10 @@ else {
 # ========== Extract deployment details ==========
 $location = $workspace.location
 if ([string]::IsNullOrEmpty($ProjectName)) {
-    # Extract project name from RG: rg-{projectName}-shared-{environment}
-    $ProjectName = $ResourceGroupName -replace 'rg-', '' -replace '-shared-.*', ''
+    # Extract project name from RG: rg-{environment}-{projectName}-shared
+    $parts = $ResourceGroupName -replace 'rg-', '' -split '-'
+    # Format: {env}-{project}-shared, so project is index 1
+    $ProjectName = $parts[1]
 }
 
 # ========== Parameters ==========

@@ -1,17 +1,36 @@
 // Azure Kubernetes Service (AKS) Cluster Module
-// This module deploys AKS for:
-// - Azure ML model serving
-// - Inference endpoints
-// - Containerized workloads
+// Private AKS cluster with enhanced security
+// Based on AKS Secure Baseline Landing Zone Accelerator patterns
 
 param location string
 param projectName string
 param environmentName string
 param aksSubnetId string
 param nodeCount int
+param vnetId string
+param privateEndpointSubnetId string
 param tags object
 
 var clusterName = 'aks-${projectName}-${environmentName}'
+var logAnalyticsWorkspaceName = 'log-${projectName}-${environmentName}'
+
+// ========== Log Analytics Workspace for AKS ==========
+resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsWorkspaceName
+  location: location
+  tags: tags
+  properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
 
 // ========== Azure Kubernetes Service ==========
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
@@ -88,7 +107,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       omsagent: {
         enabled: true
         config: {
-          logAnalyticsWorkspaceResourceID: '/subscriptions/${subscription().subscriptionId}/resourcegroups/${resourceGroup().name}/providers/microsoft.operationalinsights/workspaces/log-${projectName}-${environmentName}'
+          logAnalyticsWorkspaceResourceID: logAnalyticsWorkspace.id
         }
       }
       azurepolicy: {
@@ -97,13 +116,10 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
           version: 'v2'
         }
       }
-      ingressApplicationGateway: {
-        enabled: false
-      }
     }
     securityProfile: {
       defender: {
-        logAnalyticsWorkspaceResourceId: '/subscriptions/${subscription().subscriptionId}/resourcegroups/${resourceGroup().name}/providers/microsoft.operationalinsights/workspaces/log-${projectName}-${environmentName}'
+        logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
         securityMonitoring: {
           enabled: true
         }
@@ -111,9 +127,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       imageCleaner: {
         enabled: true
         intervalHours: 24
-      }
-      azureKeyVaultKms: {
-        enabled: false
       }
       workloadIdentity: {
         enabled: true

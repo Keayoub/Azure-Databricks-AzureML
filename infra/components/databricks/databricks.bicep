@@ -17,7 +17,7 @@ param privateEndpointSubnetId string
 param tags object
 
 var workspaceName = 'dbw-${projectName}-${environmentName}'
-var managedResourceGroupName = 'rg-${projectName}-${environmentName}-databricks-managed'
+var managedResourceGroupName = 'rg-${environmentName}-${projectName}-databricks-managed'
 var pricingTier = 'premium' // Premium required for Unity Catalog and Delta Sharing
 
 // ========== Azure Databricks Workspace ==========

@@ -70,10 +70,10 @@ azd provision --preview
 ### 1. Access Your Workspace
 
 ```bash
-# Get workspace URL
+# Get workspace URL (adjust RG: rg-{env}-{project}-databricks)
 az databricks workspace show \
   --name "dbw-secure-db-dev" \
-  --resource-group "rg-secure-db-dev-*" \
+  --resource-group "rg-dev-*-databricks" \
   --query "properties.workspaceUrl" -o tsv
 
 # If you get "privacy settings disallow access" error:
@@ -163,9 +163,9 @@ This is expected! The tenant policy prevents shared-key access (more secure).
 # Check what went wrong
 azd provision --debug
 
-# View deployment details
+# View deployment details (adjust RG: rg-{env}-{project}-databricks)
 az deployment group list \
-  --resource-group "rg-secure-db-dev-*" \
+  --resource-group "rg-dev-*-databricks" \
   --query "[0].properties.statusMessage"
 ```
 
@@ -179,7 +179,7 @@ az deployment group list \
 | Storage Account (UC) | `stsecuredbdev*` | Azure Portal → Storage Accounts |
 | Container Registry | `acrsecuredbdev*` | Azure Portal → Container Registries |
 | Key Vault | `kv-secure-db-dev-*` | Azure Portal → Key Vaults |
-| Resource Group | `rg-secure-db-dev-*` | Azure Portal → Resource Groups |
+| Resource Group | `rg-dev-{project}-*` | Azure Portal → Resource Groups |
 
 ---
 
