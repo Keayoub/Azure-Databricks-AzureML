@@ -13,8 +13,20 @@ param enableUnityCatalog = true
 param deployAzureML = true
 param deployAIFoundry = true
 param deployAKS = false
-param deployACA = false
 param aksNodeCount = 3
+
+// AI Foundry Landing Zone - Optional Services (set to true to deploy)
+param deployAISearch = false
+param deployCosmosDB = false
+param deployAppConfiguration = false
+param deployAPIM = false
+
+// AI Service SKUs and Configuration
+param aiSearchSku = 'standard'
+param cosmosDbConsistencyLevel = 'Session'
+param apimSku = 'Developer'
+param apimPublisherEmail = 'admin@yourdomain.com'
+param apimPublisherName = 'Your Organization'
 
 // Tags
 param tags = {

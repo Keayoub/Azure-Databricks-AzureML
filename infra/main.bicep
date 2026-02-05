@@ -1,8 +1,9 @@
 // Main Bicep file for Secure Azure Databricks, Azure ML, and AI Foundry deployment
-// Organized into 3 separate resource groups:
-// 1. Shared Services (VNet, Storage, Key Vault, ACR)
+// Organized into 4 separate resource groups:
+// 1. Shared Services (VNet, Storage, Key Vault, ACR, App Config, APIM)
 // 2. Databricks Infrastructure
-// 3. AI Platform (Azure ML, AI Foundry)
+// 3. AI Platform (Azure ML, AI Foundry, AI Search, Cosmos DB)
+// 4. Container Compute (AKS, ACA)
 
 targetScope = 'subscription'
 
@@ -34,10 +35,40 @@ param deployAKS bool = false
 @description('Deploy Azure Container Apps environment')
 param deployACA bool = false
 
+@description('Deploy Azure AI Search for RAG scenarios')
+param deployAISearch bool = false
+
+@description('Deploy Azure Cosmos DB for AI agent data')
+param deployCosmosDB bool = false
+
+@description('Deploy Azure App Configuration for feature flags')
+param deployAppConfiguration bool = false
+
+@description('Deploy API Management as API gateway')
+param deployAPIM bool = false
+
 @description('AKS node count for model serving')
 @minValue(1)
 @maxValue(10)
 param aksNodeCount int = 3
+
+@description('AI Search SKU')
+@allowed(['basic', 'standard', 'standard2', 'standard3'])
+param aiSearchSku string = 'standard'
+
+@description('Cosmos DB consistency level')
+@allowed(['Eventual', 'Session', 'Strong', 'BoundedStaleness', 'ConsistentPrefix'])
+param cosmosDbConsistencyLevel string = 'Session'
+
+@description('API Management SKU')
+@allowed(['Developer', 'Basic', 'Standard', 'Premium'])
+param apimSku string = 'Developer'
+
+@description('API Management publisher email')
+param apimPublisherEmail string = 'admin@example.com'
+
+@description('API Management publisher name')
+param apimPublisherName string = 'API Management Admin'
 
 @description('Your object ID for admin permissions')
 param adminObjectId string
@@ -92,6 +123,7 @@ module networking 'components/networking/networking.bicep' = {
     environmentName: environmentName
     tags: tags
     deployAKS: deployAKS
+    deployAPIM: deployAPIM
   }
 }
 
@@ -212,6 +244,39 @@ module securityRbac 'components/security/security-rbac.bicep' = {
   }
 }
 
+// App Configuration (optional)
+module appConfig 'components/app-config/app-config.bicep' = if (deployAppConfiguration) {
+  scope: sharedResourceGroup
+  name: 'appconfig-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// API Management (optional)
+module apim 'components/apim/apim.bicep' = if (deployAPIM) {
+  scope: sharedResourceGroup
+  name: 'apim-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    apimSubnetId: networking.outputs.apimSubnetId
+    appInsightsId: monitoring.outputs.applicationInsightsId
+    appInsightsInstrumentationKey: monitoring.outputs.applicationInsightsInstrumentationKey
+    publisherEmail: apimPublisherEmail
+    publisherName: apimPublisherName
+    sku: apimSku
+    tags: tags
+  }
+}
+
 // ========== DATABRICKS RESOURCE GROUP ==========
 
 module databricks 'components/databricks/databricks.bicep' = {
@@ -276,6 +341,36 @@ module aiFoundry 'components/ai-foundry/ai-foundry.bicep' = if (deployAIFoundry)
   }
 }
 
+// AI Search (optional)
+module aiSearch 'components/ai-search/ai-search.bicep' = if (deployAISearch) {
+  scope: aiPlatformResourceGroup
+  name: 'aisearch-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    sku: aiSearchSku
+    tags: tags
+  }
+}
+
+// Cosmos DB (optional)
+module cosmosDb 'components/cosmos-db/cosmos-db.bicep' = if (deployCosmosDB) {
+  scope: aiPlatformResourceGroup
+  name: 'cosmosdb-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    consistencyLevel: cosmosDbConsistencyLevel
+    tags: tags
+  }
+}
+
 // ========== Outputs ==========
 output sharedResourceGroupName string = sharedResourceGroup.name
 output databricksResourceGroupName string = databricksResourceGroup.name
@@ -302,6 +397,12 @@ output monitoringOutputs object = monitoring.outputs
 @description('Security & RBAC outputs (Managed Identities)')
 output securityRbacOutputs object = securityRbac.outputs
 
+@description('App Configuration endpoint')
+output appConfigurationEndpoint string = deployAppConfiguration ? appConfig!.outputs.appConfigEndpoint : ''
+
+@description('API Management gateway URL')
+output apimGatewayUrl string = deployAPIM ? apim!.outputs.apimGatewayUrl : ''
+
 @description('Databricks workspace URL')
 output databricksWorkspaceUrl string = databricks.outputs.workspaceUrl
 
@@ -310,6 +411,12 @@ output azureMLWorkspaceId string = deployAzureML ? azureML!.outputs.workspaceId 
 
 @description('AI Foundry hub ID')
 output aiFoundryHubId string = deployAIFoundry ? aiFoundry!.outputs.hubId : ''
+
+@description('AI Search endpoint')
+output aiSearchEndpoint string = deployAISearch ? aiSearch!.outputs.searchServiceEndpoint : ''
+
+@description('Cosmos DB endpoint')
+output cosmosDbEndpoint string = deployCosmosDB ? cosmosDb!.outputs.cosmosAccountEndpoint : ''
 
 @description('AKS cluster resource ID')
 output aksClusterResourceId string = deployAKS ? aks!.outputs.aksClusterResourceId : ''
