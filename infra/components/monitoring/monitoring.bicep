@@ -12,8 +12,8 @@ param enableApplicationInsights bool = true
 param enableLogAnalytics bool = true
 param logRetentionInDays int = 30
 
-var workspaceName = 'law-${projectName}-${environmentName}'
-var appInsightsName = 'ai-${projectName}-${environmentName}'
+var workspaceName = 'law-${environmentName}-${projectName}'
+var appInsightsName = 'appi-${environmentName}-${projectName}'
 
 // ========== Log Analytics Workspace ==========
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enableLogAnalytics) {

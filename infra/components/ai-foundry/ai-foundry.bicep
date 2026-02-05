@@ -14,8 +14,8 @@ param privateEndpointSubnetId string
 param privateDnsZoneId string
 param tags object
 
-var hubName = 'aihub-${projectName}-${environmentName}'
-var privateEndpointName = 'pe-aihub-${projectName}-${environmentName}'
+var hubName = 'aihub-${environmentName}-${projectName}'
+var privateEndpointName = 'pe-${environmentName}-${projectName}-aihub'
 
 var storageAccountName = split(storageAccountId, '/')[8]
 var keyVaultName = split(keyVaultId, '/')[8]

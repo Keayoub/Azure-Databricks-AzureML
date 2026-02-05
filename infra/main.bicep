@@ -80,6 +80,31 @@ param tags object = {
   ManagedBy: 'Bicep'
 }
 
+// Network Address Space Configuration (optional - customize if needed)
+@description('VNet address space')
+param vnetAddressPrefix string = '10.0.0.0/16'
+
+@description('Databricks public subnet')
+param databricksPublicSubnetPrefix string = '10.0.1.0/24'
+
+@description('Databricks private subnet')
+param databricksPrivateSubnetPrefix string = '10.0.2.0/24'
+
+@description('Azure ML compute subnet')
+param azureMLComputeSubnetPrefix string = '10.0.3.0/24'
+
+@description('AKS subnet')
+param aksSubnetPrefix string = '10.0.4.0/23'
+
+@description('ACA infrastructure subnet')
+param acaInfrastructureSubnetPrefix string = '10.0.6.0/23'
+
+@description('Private endpoints subnet')
+param privateEndpointSubnetPrefix string = '10.0.8.0/24'
+
+@description('API Management subnet')
+param apimSubnetPrefix string = '10.0.9.0/24'
+
 // ========== Variables ==========
 var sharedRgName = 'rg-${environmentName}-${projectName}-shared'
 var databricksRgName = 'rg-${environmentName}-${projectName}-databricks'
@@ -124,6 +149,14 @@ module networking 'components/networking/networking.bicep' = {
     tags: tags
     deployAKS: deployAKS
     deployAPIM: deployAPIM
+    vnetAddressPrefix: vnetAddressPrefix
+    databricksPublicSubnetPrefix: databricksPublicSubnetPrefix
+    databricksPrivateSubnetPrefix: databricksPrivateSubnetPrefix
+    azureMLComputeSubnetPrefix: azureMLComputeSubnetPrefix
+    aksSubnetPrefix: aksSubnetPrefix
+    acaInfrastructureSubnetPrefix: acaInfrastructureSubnetPrefix
+    privateEndpointSubnetPrefix: privateEndpointSubnetPrefix
+    apimSubnetPrefix: apimSubnetPrefix
   }
 }
 

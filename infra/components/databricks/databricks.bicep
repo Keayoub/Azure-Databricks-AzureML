@@ -16,7 +16,7 @@ param publicSubnetName string
 param privateEndpointSubnetId string
 param tags object
 
-var workspaceName = 'dbw-${projectName}-${environmentName}'
+var workspaceName = 'dbw-${environmentName}-${projectName}'
 var managedResourceGroupName = 'rg-${environmentName}-${projectName}-databricks-managed'
 var pricingTier = 'premium' // Premium required for Unity Catalog and Delta Sharing
 
@@ -84,7 +84,7 @@ resource databricksUiDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetwo
 
 // Private Endpoint for Workspace UI and API (databricks_ui_api)
 resource databricksUiPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-${workspaceName}-ui'
+  name: 'pe-${environmentName}-${projectName}-dbw-ui'
   location: location
   tags: tags
   properties: {
@@ -122,7 +122,7 @@ resource databricksUiPrivateDnsZoneGroup 'Microsoft.Network/privateEndpoints/pri
 
 // Private Endpoint for Browser Authentication (browser_authentication)
 resource databricksBrowserAuthPrivateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {
-  name: 'pe-${workspaceName}-auth'
+  name: 'pe-${environmentName}-${projectName}-dbw-auth'
   location: location
   tags: tags
   properties: {

@@ -12,31 +12,48 @@ param tags object
 param deployAKS bool
 param deployAPIM bool = false
 
+// Network Address Space Configuration
+@description('VNet address space (CIDR block)')
+param vnetAddressPrefix string = '10.0.0.0/16'
+
+@description('Databricks public subnet address prefix')
+param databricksPublicSubnetPrefix string = '10.0.1.0/24'
+
+@description('Databricks private subnet address prefix')
+param databricksPrivateSubnetPrefix string = '10.0.2.0/24'
+
+@description('Azure ML compute subnet address prefix')
+param azureMLComputeSubnetPrefix string = '10.0.3.0/24'
+
+@description('AKS subnet address prefix (minimum /23)')
+param aksSubnetPrefix string = '10.0.4.0/23'
+
+@description('ACA infrastructure subnet address prefix (minimum /23)')
+param acaInfrastructureSubnetPrefix string = '10.0.6.0/23'
+
+@description('Private endpoints subnet address prefix')
+param privateEndpointSubnetPrefix string = '10.0.8.0/24'
+
+@description('API Management subnet address prefix')
+param apimSubnetPrefix string = '10.0.9.0/24'
+
 // VNet configuration
-var vnetName = 'vnet-${projectName}-${environmentName}'
-var vnetAddressPrefix = '10.0.0.0/16'
+var vnetName = 'vnet-${environmentName}-${projectName}'
 
 // Subnet configurations
 var databricksPublicSubnetName = 'snet-databricks-public'
-var databricksPublicSubnetPrefix = '10.0.1.0/24'
 
 var databricksPrivateSubnetName = 'snet-databricks-private'
-var databricksPrivateSubnetPrefix = '10.0.2.0/24'
 
 var azureMLComputeSubnetName = 'snet-azureml-compute'
-var azureMLComputeSubnetPrefix = '10.0.3.0/24'
 
 var aksSubnetName = 'snet-aks'
-var aksSubnetPrefix = '10.0.4.0/23' // /23 for larger AKS clusters
 
 var acaInfrastructureSubnetName = 'snet-aca-infrastructure'
-var acaInfrastructureSubnetPrefix = '10.0.7.0/23' // /23 minimum required for ACA
 
 var privateEndpointSubnetName = 'snet-private-endpoints'
-var privateEndpointSubnetPrefix = '10.0.6.0/24'
 
 var apimSubnetName = 'snet-apim'
-var apimSubnetPrefix = '10.0.9.0/24' // /24 for APIM (minimum /27 required)
 
 // ========== Network Security Groups ==========
 

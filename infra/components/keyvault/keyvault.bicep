@@ -12,7 +12,7 @@ param vnetId string
 param privateEndpointSubnetId string
 param tags object
 
-var keyVaultName = 'kv-${projectName}-${environmentName}-${uniqueString(resourceGroup().id)}'
+var keyVaultName = 'kv-${environmentName}-${projectName}-${uniqueString(resourceGroup().id)}'
 var privateEndpointName = 'pe-${keyVaultName}'
 
 // ========== Key Vault ==========
