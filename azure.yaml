@@ -21,9 +21,12 @@ hooks:
     shell: pwsh
     run: |
       Write-Host "Validating deployment configuration..." -ForegroundColor Green
-      
-  postprovision:
+  
+  postdeploy:
     shell: pwsh
     run: |
-      Write-Host "Deployment complete! Review the resources in Azure Portal" -ForegroundColor Green
-      Write-Host "Resource Group: $env:AZURE_RESOURCE_GROUP" -ForegroundColor Cyan
+      Write-Host "========================================" -ForegroundColor Green
+      Write-Host "Deploying Terraform Unity Catalog" -ForegroundColor Green
+      Write-Host "========================================" -ForegroundColor Green
+      Write-Host ""
+      ./infra/scripts/postprovision.ps1

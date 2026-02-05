@@ -33,11 +33,17 @@ az ad signed-in-user show --query id -o tsv
 
 # 2. Edit infra/main.bicepparam and set adminObjectId
 
-# 3. Deploy
+# 3. Set your Databricks Account ID (one-time setup)
+# Get it from: https://accounts.azuredatabricks.net
+azd env set DATABRICKS_ACCOUNT_ID "your-account-id"
+
+# 4. Deploy (Bicep + Terraform Unity Catalog automatically)
 azd provision
 ```
 
 **Total time: 15-30 minutes** (infrastructure deployment)
+
+> **Note:** Your Databricks Account ID is available at <https://accounts.azuredatabricks.net> in the URL or Account Settings. This is a one-time configuration - Azure Developer CLI stores it for all future deployments.
 
 ## 🏗️ What Gets Deployed
 
@@ -137,20 +143,62 @@ docs/
 ├── DEPLOYMENT.md           # Deployment instructions
 ├── UNITY-CATALOG.md        # Catalog configuration
 └── POST-DEPLOYMENT.md      # Post-deployment steps
+
+terraform/
+├── README.md               # Terraform-specific guide
+├── modules/
+│   ├── databricks-uc-metastore/    # UC metastore setup
+│   ├── databricks-uc-catalogs/     # Catalogs & schemas
+│   └── databricks-uc-volumes/      # External volumes
+└── environments/
+    ├── dev.tf              # Terraform configuration
+    ├── variables.tf        # Input variables
+    ├── outputs.tf          # Output values
+    └── dev.tfvars          # Environment-specific values (dev)
+```
+
+## 📚 Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│         Azure Subscription                      │
+├─────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────┐  │
+│  │  Bicep IaC (Azure Infrastructure)        │  │
+│  │  ├─ Resource Groups (4)                  │  │
+│  │  ├─ Networking (VNet, NSG, Endpoints)    │  │
+│  │  ├─ Databricks Workspace                 │  │
+│  │  ├─ Azure ML Workspace                   │  │
+│  │  ├─ AI Foundry Hub                       │  │
+│  │  └─ Monitoring (Log Analytics)           │  │
+│  └──────────────────────────────────────────┘  │
+│           ↓ Outputs to                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │  Terraform IaC (Unity Catalog Layer)      │  │
+│  │  ├─ UC Metastore                         │  │
+│  │  ├─ Catalogs & Schemas                   │  │
+│  │  ├─ Volumes & Permissions                │  │
+│  │  └─ Security & Access Control            │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
 ```
 
 ## 🚀 Deployment Time
 
-Typical deployment: **15-30 minutes**
+Bicep infrastructure: **15-30 minutes**
+Terraform UC layer: **5-10 minutes**
 
 ## 📖 Documentation
 
-- [Deployment Guide](./docs/DEPLOYMENT.md)
-- [Unity Catalog Setup](./docs/UNITY-CATALOG.md)
+- [Bicep Deployment Guide](./docs/DEPLOYMENT.md)
+- [Unity Catalog Setup (Terraform)](./terraform/README.md) ← **New!**
 - [Post-Deployment Configuration](./docs/POST-DEPLOYMENT.md)
 - [Project Structure](./docs/PROJECT-STRUCTURE.md)
 
+
 ## 🔧 Common Commands
+
+### Bicep Infrastructure Deployment
 
 ```bash
 # Install prerequisites (all platforms)
@@ -165,23 +213,48 @@ azd provision --preview
 # Deploy
 azd provision
 
+# Check deployment status
+az deployment sub show -n databricks-azureml-iac
+```
+
+### Terraform Unity Catalog Deployment
+
+```bash
+# Navigate to Terraform directory
+cd terraform/environments
+
+# Initialize Terraform
+terraform init
+
+# Validate configuration
+terraform validate
+
+# Preview changes
+terraform plan -var-file=dev.tfvars
+
+# Deploy UC infrastructure
+terraform apply -var-file=dev.tfvars
+
+# Get outputs
+terraform output -json
+
+# Destroy UC infrastructure (careful!)
+terraform destroy -var-file=dev.tfvars
+```
+
+### Databricks Setup
+
+```bash
 # Configure Databricks CLI
 databricks configure --token
 
-# Run Unity Catalog setup
-.\infra\modules\scripts\setup-unity-catalog.ps1 `
-    -WorkspaceUrl "https://<workspace>.cloud.databricks.com" `
-    -WorkspaceId "<workspace-id>" `
-    -StorageAccountName "<storage-account>" `
-    -StorageContainerName "unity-catalog" `
-    -MetastoreName "metastore-dev" `
-    -ProjectName "project" `
-    -Environment "dev" `
-    -Location "canadaeast"
+# Verify workspace connection
+databricks workspace list
 
-# Clean up resources
-az group delete --name <resource-group-name>
+# Run post-deployment setup
+.\infra\scripts\deployment\install-prerequisites.ps1
 ```
+
 
 ## 📞 Support
 

@@ -1,0 +1,84 @@
+formatter: "markdown table"
+
+output:
+  file: "README.md"
+  mode: replace
+
+indent: 2
+
+sort:
+  enabled: true
+  by: name
+
+sections:
+  hide: []
+  show: []
+
+content: |-
+  # Terraform Modules - Databricks Unity Catalog
+
+  {{ .Content }}
+
+  ## Requirements
+  
+  | Name | Version |
+  |------|---------|
+  {{ range .Module.Requirements }}
+  | {{ .Name }} | {{ .Version }} |
+  {{ end }}
+  
+  ## Providers
+  
+  | Name | Version |
+  |------|---------|
+  {{ range .Module.Providers }}
+  | {{ .Name }} | {{ .Version }} |
+  {{ end }}
+  
+  ## Modules
+  
+  {{ if gt (len .Module.Modules) 0 }}
+  | Name | Source | Version |
+  |------|--------|---------|
+  {{ range .Module.Modules }}
+  | {{ .Name }} | {{ .Source }} | {{ .Version }} |
+  {{ end }}
+  {{ else }}
+  No modules.
+  {{ end }}
+  
+  ## Resources
+  
+  {{ if gt (len .Module.Resources) 0 }}
+  | Name | Type |
+  |------|------|
+  {{ range .Module.Resources }}
+  | {{ .Name }} | {{ .Type }} |
+  {{ end }}
+  {{ else }}
+  No resources.
+  {{ end }}
+  
+  ## Inputs
+  
+  {{ if gt (len .Module.Inputs) 0 }}
+  | Name | Description | Type | Default | Required |
+  |------|-------------|------|---------|:--------:|
+  {{ range .Module.Inputs }}
+  | {{ .Name }} | {{ .Description }} | `{{ .Type }}` | {{ .Default | default "n/a" }} | {{ if .Required }}yes{{ else }}no{{ end }} |
+  {{ end }}
+  {{ else }}
+  No inputs.
+  {{ end }}
+  
+  ## Outputs
+  
+  {{ if gt (len .Module.Outputs) 0 }}
+  | Name | Description |
+  |------|-------------|
+  {{ range .Module.Outputs }}
+  | {{ .Name }} | {{ .Description }} |
+  {{ end }}
+  {{ else }}
+  No outputs.
+  {{ end }}
