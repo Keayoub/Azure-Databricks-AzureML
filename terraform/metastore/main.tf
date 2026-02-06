@@ -54,7 +54,8 @@ data "databricks_metastores" "available" {
 
 locals {
   metastore_exists = length(data.databricks_metastores.available.ids) > 0
-  existing_id      = local.metastore_exists ? data.databricks_metastores.available.ids[0] : null
+  metastore_name   = "metastore-${var.environment_name}"
+  existing_id      = local.metastore_exists ? try(data.databricks_metastores.available.ids[local.metastore_name], values(data.databricks_metastores.available.ids)[0]) : null
   
   metastore_container_name = "unity-catalog"
 }
@@ -98,9 +99,17 @@ resource "databricks_metastore_assignment" "workspace" {
   provider             = databricks.accounts
   metastore_id         = local.metastore_id
   workspace_id         = var.databricks_workspace_id
-  default_catalog_name = "main"
 
   depends_on = [
     databricks_metastore_data_access.uc_access
+  ]
+}
+
+# Set the default namespace (replacement for default_catalog_name)
+resource "databricks_default_namespace_setting" "workspace" {
+  namespace = "main"
+
+  depends_on = [
+    databricks_metastore_assignment.workspace
   ]
 }
