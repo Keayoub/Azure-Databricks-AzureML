@@ -1,3 +1,18 @@
+locals {
+  name_prefix           = "${var.project_name}-${var.environment_name}"
+  uc_access_connector_name = "ac-${local.name_prefix}-uc"
+}
+
+import {
+  to = module.uc_metastore.azurerm_databricks_access_connector.uc_connector
+  id = format(
+    "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Databricks/accessConnectors/%s",
+    var.subscription_id,
+    var.shared_resource_group_name,
+    local.uc_access_connector_name
+  )
+}
+
 # ========== UC Metastore Module ==========
 module "uc_metastore" {
   source = "../modules/adb-uc-metastore"
@@ -16,6 +31,7 @@ module "uc_metastore" {
   databricks_workspace_host = var.databricks_workspace_host
   databricks_account_id     = var.databricks_account_id
   metastore_owner           = var.metastore_owner
+  storage_account_replication_type = var.storage_account_replication_type
   tags                      = var.tags
 }
 

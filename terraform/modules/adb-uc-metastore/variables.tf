@@ -50,6 +50,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "storage_account_replication_type" {
+  description = "Storage account replication type (e.g., LRS, GRS, RAGRS, ZRS)."
+  type        = string
+  default     = "LRS"
+}
+
 locals {
   name_prefix              = "${var.project_name}-${var.environment_name}"
   storage_account_name     = replace("st${var.project_name}${var.environment_name}uc", "-", "")

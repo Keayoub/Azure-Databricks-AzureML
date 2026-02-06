@@ -7,8 +7,9 @@ resource "azurerm_storage_account" "uc_metastore" {
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
-  account_replication_type = "ZRS"
+  account_replication_type = var.storage_account_replication_type
   is_hns_enabled           = true # Required for ADLS Gen2
+  shared_access_key_enabled = true
 
   network_rules {
     default_action = "Deny"

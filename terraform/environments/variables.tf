@@ -91,3 +91,9 @@ variable "tags" {
     "managed-by" : "terraform"
   }
 }
+
+variable "storage_account_replication_type" {
+  description = "Storage account replication type for UC metastore (e.g., LRS, GRS, RAGRS, ZRS)."
+  type        = string
+  default     = "LRS"
+}
