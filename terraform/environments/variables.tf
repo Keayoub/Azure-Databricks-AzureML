@@ -92,8 +92,12 @@ variable "tags" {
   }
 }
 
-variable "storage_account_replication_type" {
-  description = "Storage account replication type for UC metastore (e.g., LRS, GRS, RAGRS, ZRS)."
+variable "metastore_storage_name" {
+  description = "Name of the existing storage account for UC metastore (from Bicep deployment)"
   type        = string
-  default     = "LRS"
+}
+
+variable "access_connector_name" {
+  description = "Name of the existing Databricks Access Connector (from Bicep deployment)"
+  type        = string
 }

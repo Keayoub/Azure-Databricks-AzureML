@@ -152,3 +152,4 @@ audit-logs/
 infra/main.json
 infra/main.json
 infra/main.local.bicepparam
+.github/agents/

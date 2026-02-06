@@ -50,15 +50,16 @@ variable "tags" {
   default     = {}
 }
 
-variable "storage_account_replication_type" {
-  description = "Storage account replication type (e.g., LRS, GRS, RAGRS, ZRS)."
+variable "metastore_storage_name" {
+  description = "Name of the existing storage account (created by Bicep)"
   type        = string
-  default     = "LRS"
+}
+
+variable "access_connector_name" {
+  description = "Name of the existing Databricks Access Connector (created by Bicep)"
+  type        = string
 }
 
 locals {
-  name_prefix              = "${var.project_name}-${var.environment_name}"
-  storage_account_name     = replace("st${var.project_name}${var.environment_name}uc", "-", "")
-  access_connector_name    = "ac-${local.name_prefix}-uc"
-  metastore_container_name = "uc-metastore"
+  metastore_container_name = "unity-catalog"
 }
