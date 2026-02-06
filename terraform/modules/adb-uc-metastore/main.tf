@@ -17,20 +17,29 @@ data "azurerm_databricks_access_connector" "uc_connector" {
   resource_group_name = var.resource_group_name
 }
 
-# ========== Auto-detect Existing Metastores ==========
-# Get all metastores - if one exists in this region, we'll use it
-data "databricks_metastores" "all" {}
-
-locals {
-  # Check if any metastore exists
-  existing_metastores    = data.databricks_metastores.all.ids
-  has_existing_metastore = length(local.existing_metastores) > 0
-  existing_metastore_id  = local.has_existing_metastore ? local.existing_metastores[0] : null
+# ========== Check for existing metastore via Databricks CLI ==========
+data "external" "existing_metastore" {
+  program = ["bash", "-c", <<-EOT
+    # Check if metastore exists in this account
+    METASTORE_ID=$(databricks metastores list --output json 2>/dev/null | jq -r '.[0].metastore_id // ""')
+    
+    if [ -n "$METASTORE_ID" ]; then
+      echo "{\"metastore_id\":\"$METASTORE_ID\",\"exists\":\"true\"}"
+    else
+      echo "{\"metastore_id\":\"\",\"exists\":\"false\"}"
+    fi
+  EOT
+  ]
 }
 
-# ========== Create New Metastore (only if none exists) ==========
+locals {
+  metastore_exists = data.external.existing_metastore.result.exists == "true"
+  existing_id      = data.external.existing_metastore.result.metastore_id
+}
+
+# ========== Create Metastore (only if doesn't exist) ==========
 resource "databricks_metastore" "primary" {
-  count         = local.has_existing_metastore ? 0 : 1
+  count         = local.metastore_exists ? 0 : 1
   name          = "metastore-${var.environment_name}"
   owner         = var.metastore_owner
   force_destroy = true
@@ -40,15 +49,22 @@ resource "databricks_metastore" "primary" {
     data.azurerm_storage_account.uc_metastore.name)
 }
 
-# ========== Unified Metastore ID ==========
+# ========== Import existing metastore if found ==========
+import {
+  to = databricks_metastore.primary[0]
+  id = local.existing_id
+  
+  # Only import if metastore exists
+  for_each = local.metastore_exists ? toset([local.existing_id]) : toset([])
+}
+
 locals {
-  metastore_id = local.has_existing_metastore ? local.existing_metastore_id : databricks_metastore.primary[0].id
+  metastore_id = local.metastore_exists ? local.existing_id : databricks_metastore.primary[0].id
 }
 
 # ========== Metastore Data Access (Credentials) ==========
-# Only create for new metastores (existing ones already have credentials)
 resource "databricks_metastore_data_access" "uc_access" {
-  count         = local.has_existing_metastore ? 0 : 1
+  count         = local.metastore_exists ? 0 : 1  # Only for new metastores
   metastore_id  = local.metastore_id
   name          = "uc-access-connector"
   force_destroy = true
@@ -63,7 +79,7 @@ resource "databricks_metastore_data_access" "uc_access" {
 # ========== Assign Metastore to Workspace ==========
 resource "databricks_metastore_assignment" "workspace" {
   metastore_id = local.metastore_id
-  workspace_id         = var.databricks_workspace_id
+  workspace_id = var.databricks_workspace_id
 }
 
 # ========== Default Namespace Setting ==========
