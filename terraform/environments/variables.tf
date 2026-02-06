@@ -16,6 +16,12 @@ variable "environment_name" {
 variable "databricks_workspace_host" {
   description = "Databricks workspace host URL (from Bicep deployment)"
   type        = string
+  sensitive   = true  # Prevent logging of workspace URLs
+  
+  validation {
+    condition     = can(regex("^https://", var.databricks_workspace_host))
+    error_message = "Workspace host must be a valid HTTPS URL."
+  }
 }
 
 variable "catalogs" {
@@ -38,6 +44,13 @@ variable "catalogs" {
       schemas = {}
     }
   }
+  
+  validation {
+    condition = alltrue([
+      for k, v in var.catalogs : can(regex("^[a-z0-9_]{3,255}$", v.name))
+    ])
+    error_message = "Catalog names must be 3-255 chars, lowercase letters, numbers, and underscores only."
+  }
 }
 
 variable "volumes" {
@@ -59,4 +72,22 @@ variable "tags" {
     "project" : "databricks-azureml"
     "managed-by" : "terraform"
   }
+}
+
+variable "enable_catalog_management" {
+  description = "Enable Unity Catalog management (set to false to skip catalog creation)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_volume_management" {
+  description = "Enable volume management (set to false to skip volume creation)"
+  type        = bool
+  default     = true
+}
+
+variable "skip_existing_resources" {
+  description = "Skip resources that already exist (idempotent mode)"
+  type        = bool
+  default     = true
 }

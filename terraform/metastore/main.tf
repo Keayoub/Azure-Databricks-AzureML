@@ -66,23 +66,40 @@ resource "databricks_metastore" "primary" {
   count         = local.metastore_exists ? 0 : 1
   name          = "metastore-${var.project_name}"
   region        = var.databricks_region
-  force_destroy = true
+  force_destroy = var.environment_name != "prod"  # Safety: never force destroy in production
 
   storage_root = format("abfss://%s@%s.dfs.core.windows.net/",
     local.metastore_container_name,
     data.azurerm_storage_account.uc_metastore.name)
+  
+  lifecycle {
+    prevent_destroy = false  # Set to true for production
+    
+    precondition {
+      condition     = data.azurerm_storage_account.uc_metastore.account_tier == "Standard" || data.azurerm_storage_account.uc_metastore.account_tier == "Premium"
+      error_message = "Metastore storage account must use Standard or Premium tier."
+    }
+    
+    precondition {
+      condition     = data.azurerm_storage_account.uc_metastore.is_hns_enabled == true
+      error_message = "Metastore storage account must have hierarchical namespace (HNS) enabled for ADLS Gen2."
+    }
+  }
 }
 
 locals {
   metastore_id = local.metastore_exists ? local.existing_id : databricks_metastore.primary[0].id
+  
+  # Validation
+  validate_metastore_id = local.metastore_id != null && local.metastore_id != "" ? local.metastore_id : null
 }
 
 # ========== Metastore Data Access Configuration ==========
 resource "databricks_metastore_data_access" "uc_access" {
   provider     = databricks.accounts
-  metastore_id  = local.metastore_id
+  metastore_id  = local.validate_metastore_id
   name          = "uc-access-connector-${var.project_name}"
-  force_destroy = true
+  force_destroy = var.environment_name != "prod"
 
   azure_managed_identity {
     access_connector_id = data.azurerm_databricks_access_connector.uc_connector.id
@@ -91,15 +108,32 @@ resource "databricks_metastore_data_access" "uc_access" {
   is_default = true
   
   lifecycle {
-    ignore_changes = [is_default]
+    ignore_changes = [
+      is_default,  # May be changed manually
+    ]
+    
+    precondition {
+      condition     = local.validate_metastore_id != null
+      error_message = "Metastore ID is required but not found. Ensure metastore creation succeeded."
+    }
   }
 }
 
 # ========== Assign Metastore to Workspace ==========
 resource "databricks_metastore_assignment" "workspace" {
   provider             = databricks.accounts
-  metastore_id         = local.metastore_id
+  metastore_id         = local.validate_metastore_id
   workspace_id         = var.databricks_workspace_id
+  
+  lifecycle {
+    # Don't recreate if assignment already exists
+    create_before_destroy = false
+    
+    precondition {
+      condition     = can(regex("^[0-9]+$", tostring(var.databricks_workspace_id)))
+      error_message = "Workspace ID must be a valid numeric ID."
+    }
+  }
 
   depends_on = [
     databricks_metastore_data_access.uc_access
@@ -110,6 +144,11 @@ resource "databricks_metastore_assignment" "workspace" {
 resource "databricks_default_namespace_setting" "workspace" {
   namespace {
     value = "main"
+  }
+  
+  lifecycle {
+    # Ignore manual changes to namespace
+    ignore_changes = [namespace]
   }
 
   depends_on = [

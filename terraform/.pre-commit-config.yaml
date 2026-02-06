@@ -1,0 +1,98 @@
+# Terraform Pre-Commit Hooks Configuration
+# =========================================
+# Automatically run checks before committing Terraform code
+# 
+# Installation:
+# 1. Install pre-commit: pip install pre-commit
+# 2. Install hooks: pre-commit install
+# 3. Run manually: pre-commit run --all-files
+
+repos:
+  # Terraform formatting and validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      # Format Terraform files
+      - id: terraform_fmt
+        name: Terraform fmt
+        description: Format Terraform files with terraform fmt
+        
+      # Validate Terraform files
+      - id: terraform_validate
+        name: Terraform validate
+        description: Validate Terraform files with terraform validate
+        
+      # Generate documentation
+      - id: terraform_docs
+        name: Terraform docs
+        description: Generate documentation from Terraform modules
+        args:
+          - --args=--config=.terraform-docs.yml
+          
+      # Security scanning with tfsec
+      - id: terraform_tfsec
+        name: Terraform security scan (tfsec)
+        description: Scan for security issues
+        args:
+          - --args=--minimum-severity=MEDIUM
+          
+      # Linting with tflint
+      - id: terraform_tflint
+        name: Terraform lint (tflint)
+        description: Lint Terraform files
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        
+      - id: end-of-file-fixer
+        name: Fix end of files
+        
+      - id: check-yaml
+        name: Check YAML syntax
+        
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=500']
+        
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        
+      - id: detect-private-key
+        name: Detect private keys
+        
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+
+  # Terraform security scanning (alternative)
+  - repo: https://github.com/aquasecurity/tfsec
+    rev: v1.28.9
+    hooks:
+      - id: tfsec
+        name: tfsec security scan
+        entry: tfsec
+        language: system
+        pass_filenames: false
+        args:
+          - .
+          - --minimum-severity=MEDIUM
+          - --exclude-downloaded-modules
+
+# Manual installation steps (if pre-commit not available):
+# 
+# 1. Save this as .pre-commit-config.yaml in project root
+# 2. Install dependencies:
+#    - Terraform: https://www.terraform.io/downloads
+#    - tfsec: https://github.com/aquasecurity/tfsec
+#    - tflint: https://github.com/terraform-linters/tflint
+#    - terraform-docs: https://terraform-docs.io/
+# 3. Run manually before commits:
+#    terraform fmt -recursive
+#    terraform validate
+#    tfsec .
+#    tflint
