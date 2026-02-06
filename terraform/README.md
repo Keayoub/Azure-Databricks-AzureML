@@ -25,7 +25,7 @@ azd provision
 
 This automatically:
 1. Deploys Bicep infrastructure (networking, workspace, storage)
-2. Runs postprovision hook that deploys Terraform UC layer
+2. Runs postdeploy hook that deploys Terraform UC layer
 3. Creates complete Databricks Lakehouse
 
 See [TERRAFORM-AZD-INTEGRATION.md](../docs/TERRAFORM-AZD-INTEGRATION.md) for details.

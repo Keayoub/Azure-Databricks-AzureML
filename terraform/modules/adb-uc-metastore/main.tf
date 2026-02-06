@@ -19,7 +19,6 @@ data "azurerm_databricks_access_connector" "uc_connector" {
 
 # ========== Databricks UC Metastore ==========
 resource "databricks_metastore" "primary" {
-  provider      = databricks
   name          = "primary"
   owner         = var.metastore_owner
   force_destroy = true
@@ -31,7 +30,6 @@ resource "databricks_metastore" "primary" {
 
 # ========== Metastore Data Access (Credentials) ==========
 resource "databricks_metastore_data_access" "uc_access" {
-  provider     = databricks
   metastore_id = databricks_metastore.primary.id
   name         = "uc-access-connector"
   force_destroy = true
@@ -45,14 +43,12 @@ resource "databricks_metastore_data_access" "uc_access" {
 
 # ========== Assign Metastore to Workspace ==========
 resource "databricks_metastore_assignment" "workspace" {
-  provider             = databricks
   metastore_id         = databricks_metastore.primary.id
   workspace_id         = var.databricks_workspace_id
 }
 
 # ========== Default Namespace Setting ==========
 resource "databricks_default_namespace_setting" "this" {
-  provider = databricks
   namespace {
     value = "main"
   }

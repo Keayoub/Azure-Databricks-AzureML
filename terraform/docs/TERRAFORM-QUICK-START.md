@@ -115,7 +115,7 @@ azd down  # Remove Bicep resources
 ```
 infra/
   scripts/
-    postprovision.sh          ← Terraform deployment hook
+    postdeploy.sh             ← Terraform deployment hook
   
 azure.yaml                    ← Updated with Terraform deployment step
 

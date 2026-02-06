@@ -30,7 +30,7 @@ azd provision
 │ • Storage & Monitoring      │
 │ • RBAC Assignments          │
 └─────────────────────────────┘
-    ↓ (postprovision hook)
+    ↓ (postdeploy hook)
 ┌─────────────────────────────┐
 │ Phase 2: Terraform Deploy   │
 ├─────────────────────────────┤
@@ -71,7 +71,7 @@ azd provision
 
 **What happens:**
 1. azd deploys Bicep infrastructure (3-5 minutes)
-2. Automatically runs postprovision.sh hook
+2. Automatically runs postdeploy.sh hook
 3. Terraform initializes and deploys UC layer (2-3 minutes)
 4. Full Databricks Lakehouse ready to use
 
@@ -105,7 +105,7 @@ terraform apply
 
 ## Output Mapping: Bicep → Terraform
 
-The postprovision script automatically captures Bicep outputs and feeds them into Terraform:
+The postdeploy script automatically captures Bicep outputs and feeds them into Terraform:
 
 | Bicep Output | Terraform Variable | Used For |
 |---|---|---|
@@ -191,7 +191,7 @@ infra/
 │   └── ...other components
 │
 └── scripts/
-    ├── postprovision.sh         # Terraform deployment hook
+    ├── postdeploy.sh            # Terraform deployment hook
     └── deployment/
         └── install-prerequisites.ps1
 ```

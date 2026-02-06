@@ -17,8 +17,7 @@ provider "azurerm" {
   subscription_id = var.subscription_id
   features {}
   
-  # Use managed identity (Terraform running with User-Assigned MI from access connector)
-  # This avoids key-based authentication issues
+  # Use CLI authentication
   use_cli = true
 }
 
@@ -32,7 +31,7 @@ provider "databricks" {
 
 # Databricks workspace-level provider (for workspace resources)
 provider "databricks" {
-  alias = "workspace"
-  host  = var.databricks_workspace_host
+  alias     = "workspace"
+  host      = var.databricks_workspace_host
   auth_type = "azure-cli"
 }

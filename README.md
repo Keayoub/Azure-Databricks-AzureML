@@ -140,9 +140,8 @@ infra/
         └── setup-unity-catalog.ps1
 
 docs/
-├── DEPLOYMENT.md           # Deployment instructions
-├── UNITY-CATALOG.md        # Catalog configuration
-└── POST-DEPLOYMENT.md      # Post-deployment steps
+├── TERRAFORM-AZD-INTEGRATION.md  # Two-phase deployment guide
+└── SECURITY-AUDIT.md             # Security & networking audit
 
 terraform/
 ├── README.md               # Terraform-specific guide

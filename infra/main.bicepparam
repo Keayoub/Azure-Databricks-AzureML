@@ -6,7 +6,7 @@ param location = 'canadaeast'
 param projectName = 'dbxaml'
 
 // Admin configuration - CHANGE THIS TO YOUR OBJECT ID
-param adminObjectId = '' // Run: az ad signed-in-user show --query id -o tsv
+param adminObjectId = '75d058e8-ac84-4d33-b01c-54a8d3cbbac1' // Run: az ad signed-in-user show --query id -o tsv
 
 // Feature flags
 param enableUnityCatalog = true

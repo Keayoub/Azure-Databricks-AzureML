@@ -123,6 +123,15 @@ echo "Cleaning Terraform cache..."
 rm -rf .terraform
 rm -f *.tfstate*
 
+# Set environment variables for Terraform Databricks provider
+echo ""
+echo "Setting Databricks environment variables for Terraform..."
+export DATABRICKS_ACCOUNT_ID="$DATABRICKS_ACCOUNT_ID"
+export DATABRICKS_HOST="https://accounts.azuredatabricks.net"  # Account-level operations
+echo "  ✓ DATABRICKS_ACCOUNT_ID: $DATABRICKS_ACCOUNT_ID"
+echo "  ✓ DATABRICKS_HOST: $DATABRICKS_HOST"
+echo ""
+
 echo "Running: terraform init..."
 terraform init -upgrade
 

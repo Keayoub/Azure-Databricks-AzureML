@@ -51,8 +51,11 @@ Write-Host "  ✓ Storage Account: $STORAGE_ACCOUNT_NAME" -ForegroundColor Green
 $BICEP_PARAMS_FILE = Join-Path $PSScriptRoot "..\main.bicepparam"
 if (Test-Path $BICEP_PARAMS_FILE) {
   $BICEP_PARAMS = Get-Content $BICEP_PARAMS_FILE -Raw
-  # Extract environmentName = 'dev' | 'staging' | 'prod'
-  if ($BICEP_PARAMS -match "param environmentName = ['\"](\w+)['\"]") {
+  # Extract environmentName = 'dev' or "dev"
+  if ($BICEP_PARAMS -match "param environmentName = '(\w+)'") {
+    $ENV_NAME = $Matches[1]
+    Write-Host "  ✓ Environment Name (from bicep): $ENV_NAME" -ForegroundColor Green
+  } elseif ($BICEP_PARAMS -match 'param environmentName = "(\w+)"') {
     $ENV_NAME = $Matches[1]
     Write-Host "  ✓ Environment Name (from bicep): $ENV_NAME" -ForegroundColor Green
   } else {
@@ -130,6 +133,15 @@ Write-Host ""
 Write-Host "Cleaning Terraform cache..." -ForegroundColor Cyan
 Remove-Item -Path ".terraform" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "*.tfstate*" -Force -ErrorAction SilentlyContinue
+
+# Set environment variables for Terraform Databricks provider
+Write-Host ""
+Write-Host "Setting Databricks environment variables for Terraform..." -ForegroundColor Cyan
+$env:DATABRICKS_ACCOUNT_ID = $DATABRICKS_ACCOUNT_ID
+$env:DATABRICKS_HOST = "https://accounts.azuredatabricks.net"  # Account-level operations
+Write-Host "  ✓ DATABRICKS_ACCOUNT_ID: $DATABRICKS_ACCOUNT_ID" -ForegroundColor Green
+Write-Host "  ✓ DATABRICKS_HOST: $($env:DATABRICKS_HOST)" -ForegroundColor Green
+Write-Host ""
 
 Write-Host "Running: terraform init..." -ForegroundColor Cyan
 terraform init -upgrade
