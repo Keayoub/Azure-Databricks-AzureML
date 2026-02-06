@@ -122,6 +122,7 @@ databricks_workspace_id        = "$DATABRICKS_WORKSPACE_ID"
 databricks_workspace_host      = "$DATABRICKS_WORKSPACE_HOST"
 metastore_storage_name         = "$STORAGE_ACCOUNT_NAME"
 access_connector_name          = "$ACCESS_CONNECTOR_NAME"
+databricks_account_id          = "$DATABRICKS_ACCOUNT_ID"
 "@
 
 Set-Content -Path "terraform.tfvars" -Value $tfvars

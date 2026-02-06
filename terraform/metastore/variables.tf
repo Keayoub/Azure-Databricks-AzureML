@@ -37,6 +37,11 @@ variable "databricks_workspace_host" {
   type        = string
 }
 
+variable "databricks_account_id" {
+  description = "Databricks account ID (for account-level APIs)"
+  type        = string
+}
+
 variable "metastore_storage_name" {
   description = "Storage account name for metastore"
   type        = string
