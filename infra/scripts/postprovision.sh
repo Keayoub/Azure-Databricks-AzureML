@@ -45,8 +45,24 @@ echo "  ✓ Region: $WORKSPACE_REGION"
 STORAGE_ACCOUNT_NAME=$(echo "$storageOutputs" | jq -r '.storageAccountName.value')
 echo "  ✓ Storage Account: $STORAGE_ACCOUNT_NAME"
 
-# Construct access connector name from naming convention
-ENV_NAME=$(echo "${AZURE_ENV_NAME}" | sed 's/databricks-azureml-//')
+# Get environment name from the bicep parameter file (more reliable than AZURE_ENV_NAME)
+BICEP_PARAMS_FILE="$SCRIPT_DIR/../main.bicepparam"
+if [ -f "$BICEP_PARAMS_FILE" ]; then
+  ENV_NAME=$(grep "param environmentName = " "$BICEP_PARAMS_FILE" | grep -oE "'[^']+'" | head -1 | tr -d "'")
+  if [ -n "$ENV_NAME" ]; then
+    echo "  ✓ Environment Name (from bicep): $ENV_NAME"
+  else
+    # Fallback: extract from AZURE_ENV_NAME
+    ENV_NAME=$(echo "${AZURE_ENV_NAME}" | sed 's/databricks-azureml-//')
+    echo "  ✓ Environment Name (from AZURE_ENV_NAME): $ENV_NAME"
+  fi
+else
+  # Fallback if no bicep params file
+  ENV_NAME=$(echo "${AZURE_ENV_NAME}" | sed 's/databricks-azureml-//')
+  echo "  ✓ Environment Name (from AZURE_ENV_NAME): $ENV_NAME"
+fi
+
+# Get project name
 PROJECT_NAME=${PROJECT_NAME:-dbxaml}
 ACCESS_CONNECTOR_NAME="ac-${PROJECT_NAME}-${ENV_NAME}"
 echo "  ✓ Access Connector: $ACCESS_CONNECTOR_NAME"

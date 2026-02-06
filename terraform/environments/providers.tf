@@ -16,6 +16,10 @@ terraform {
 provider "azurerm" {
   subscription_id = var.subscription_id
   features {}
+  
+  # Use managed identity (Terraform running with User-Assigned MI from access connector)
+  # This avoids key-based authentication issues
+  use_cli = true
 }
 
 # Databricks account-level provider (for metastore operations)

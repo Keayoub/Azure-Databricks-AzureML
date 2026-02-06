@@ -28,9 +28,16 @@ param apimSku = 'Developer'
 param apimPublisherEmail = 'admin@yourdomain.com'
 param apimPublisherName = 'Your Organization'
 
+// Bastion and Jumpbox Configuration (Optional)
+param deployBastion = false
+param deployJumpbox = false
+param jumpboxAdminUsername = 'azureadmin'
+param jumpboxAdminPassword = '' // Required if deployJumpbox = true
+
 // Tags
 param tags = {
   Environment: environmentName
   Project: projectName
   ManagedBy: 'Bicep'
 }
+

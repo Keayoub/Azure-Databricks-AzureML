@@ -7,11 +7,9 @@ data "azurerm_storage_account" "uc_metastore" {
   resource_group_name = var.resource_group_name
 }
 
-# Reference existing UC container (created by Bicep)
-data "azurerm_storage_container" "uc_metastore" {
-  name                 = local.metastore_container_name
-  storage_account_name = data.azurerm_storage_account.uc_metastore.name
-}
+# Note: We don't read the storage container data source because the storage account
+# has key-based authentication disabled for security. We use the known container name
+# from Bicep: local.metastore_container_name
 
 # ========== Reference Existing Databricks Access Connector ==========
 data "azurerm_databricks_access_connector" "uc_connector" {
@@ -27,7 +25,7 @@ resource "databricks_metastore" "primary" {
   force_destroy = true
 
   storage_root = format("abfss://%s@%s.dfs.core.windows.net/",
-    data.azurerm_storage_container.uc_metastore.name,
+    local.metastore_container_name,
   data.azurerm_storage_account.uc_metastore.name)
 }
 

@@ -47,8 +47,26 @@ $STORAGE_OUTPUTS = $env:storageOutputs | ConvertFrom-Json
 $STORAGE_ACCOUNT_NAME = $STORAGE_OUTPUTS.storageAccountName.value
 Write-Host "  ✓ Storage Account: $STORAGE_ACCOUNT_NAME" -ForegroundColor Green
 
-# Construct access connector name from naming convention
-$ENV_NAME = $env:AZURE_ENV_NAME -replace "databricks-azureml-", ""
+# Get environment name from the bicep parameter file (more reliable than AZURE_ENV_NAME)
+$BICEP_PARAMS_FILE = Join-Path $PSScriptRoot "..\main.bicepparam"
+if (Test-Path $BICEP_PARAMS_FILE) {
+  $BICEP_PARAMS = Get-Content $BICEP_PARAMS_FILE -Raw
+  # Extract environmentName = 'dev' | 'staging' | 'prod'
+  if ($BICEP_PARAMS -match "param environmentName = ['\"](\w+)['\"]") {
+    $ENV_NAME = $Matches[1]
+    Write-Host "  ✓ Environment Name (from bicep): $ENV_NAME" -ForegroundColor Green
+  } else {
+    # Fallback: extract from AZURE_ENV_NAME
+    $ENV_NAME = $env:AZURE_ENV_NAME -replace "databricks-azureml-", ""
+    Write-Host "  ✓ Environment Name (from AZURE_ENV_NAME): $ENV_NAME" -ForegroundColor Yellow
+  }
+} else {
+  # Fallback if no bicep params file
+  $ENV_NAME = $env:AZURE_ENV_NAME -replace "databricks-azureml-", ""
+  Write-Host "  ✓ Environment Name (from AZURE_ENV_NAME): $ENV_NAME" -ForegroundColor Yellow
+}
+
+# Get project name
 $PROJECT_NAME = if ($env:PROJECT_NAME) { $env:PROJECT_NAME } else { "dbxaml" }
 $ACCESS_CONNECTOR_NAME = "ac-$PROJECT_NAME-$ENV_NAME"
 Write-Host "  ✓ Access Connector: $ACCESS_CONNECTOR_NAME" -ForegroundColor Green

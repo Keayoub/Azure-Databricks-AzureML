@@ -47,6 +47,19 @@ param deployAppConfiguration bool = false
 @description('Deploy API Management as API gateway')
 param deployAPIM bool = false
 
+@description('Deploy Azure Bastion for secure VM access')
+param deployBastion bool = false
+
+@description('Deploy Jumpbox VM for management tasks')
+param deployJumpbox bool = false
+
+@description('Jumpbox admin username')
+param jumpboxAdminUsername string = 'azureadmin'
+
+@secure()
+@description('Jumpbox admin password (required if deployJumpbox is true)')
+param jumpboxAdminPassword string = ''
+
 @description('AKS node count for model serving')
 @minValue(1)
 @maxValue(10)
@@ -149,6 +162,7 @@ module networking 'components/networking/networking.bicep' = {
     tags: tags
     deployAKS: deployAKS
     deployAPIM: deployAPIM
+    deployBastion: deployBastion
     vnetAddressPrefix: vnetAddressPrefix
     databricksPublicSubnetPrefix: databricksPublicSubnetPrefix
     databricksPrivateSubnetPrefix: databricksPrivateSubnetPrefix
@@ -213,6 +227,37 @@ module accessConnector 'components/databricks/access-connector.bicep' = if (enab
     environmentName: environmentName
     tags: tags
   }
+}
+
+// Azure Bastion (optional - STAYS IN SHARED RG)
+module bastion 'components/compute/bastion.bicep' = if (deployBastion) {
+  scope: sharedResourceGroup
+  name: 'bastion-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    bastionSubnetId: networking.outputs.bastionSubnetId
+    tags: tags
+  }
+}
+
+// Jumpbox VM (optional - STAYS IN SHARED RG)
+module jumpbox 'components/compute/jumpbox.bicep' = if (deployJumpbox) {
+  scope: sharedResourceGroup
+  name: 'jumpbox-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    subnetId: networking.outputs.jumpboxSubnetId
+    adminUsername: jumpboxAdminUsername
+    adminPassword: jumpboxAdminPassword
+    tags: tags
+  }
+  dependsOn: [
+    bastion // Deploy bastion first if both are enabled
+  ]
 }
 
 // ========== COMPUTE RESOURCE GROUP ==========
@@ -503,3 +548,12 @@ output aksClusterResourceId string = deployAKS ? aks!.outputs.aksClusterResource
 
 @description('Azure Container Apps environment ID')
 output containerAppsEnvironmentId string = deployACA ? containerApps!.outputs.containerAppsEnvironmentId : ''
+
+@description('Azure Bastion name')
+output bastionName string = deployBastion ? bastion!.outputs.bastionName : ''
+
+@description('Jumpbox VM name')
+output jumpboxVmName string = deployJumpbox ? jumpbox!.outputs.vmName : ''
+
+@description('Jumpbox private IP address')
+output jumpboxPrivateIp string = deployJumpbox ? jumpbox!.outputs.privateIPAddress : ''

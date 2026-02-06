@@ -11,6 +11,7 @@ param environmentName string
 param tags object
 param deployAKS bool
 param deployAPIM bool = false
+param deployBastion bool = false
 
 // Network Address Space Configuration
 @description('VNet address space (CIDR block)')
@@ -37,6 +38,12 @@ param privateEndpointSubnetPrefix string = '10.0.8.0/24'
 @description('API Management subnet address prefix')
 param apimSubnetPrefix string = '10.0.9.0/24'
 
+@description('Azure Bastion subnet address prefix')
+param bastionSubnetPrefix string = '10.0.10.0/27'
+
+@description('Jumpbox subnet address prefix')
+param jumpboxSubnetPrefix string = '10.0.11.0/27'
+
 // VNet configuration
 var vnetName = 'vnet-${environmentName}-${projectName}'
 
@@ -54,6 +61,10 @@ var acaInfrastructureSubnetName = 'snet-aca-infrastructure'
 var privateEndpointSubnetName = 'snet-private-endpoints'
 
 var apimSubnetName = 'snet-apim'
+
+var bastionSubnetName = 'AzureBastionSubnet' // Must be exactly this name
+
+var jumpboxSubnetName = 'snet-jumpbox'
 
 // ========== Network Security Groups ==========
 
@@ -472,6 +483,43 @@ resource apimNSG 'Microsoft.Network/networkSecurityGroups@2024-01-01' = if (depl
   }
 }
 
+// NSG for Jumpbox Subnet
+resource jumpboxNSG 'Microsoft.Network/networkSecurityGroups@2024-01-01' = if (deployBastion) {
+  name: 'nsg-${jumpboxSubnetName}'
+  location: location
+  tags: tags
+  properties: {
+    securityRules: [
+      {
+        name: 'AllowBastionInbound'
+        properties: {
+          priority: 100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: '*'
+          sourceAddressPrefix: bastionSubnetPrefix
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRanges: ['3389', '22']
+        }
+      }
+      {
+        name: 'DenyAllInbound'
+        properties: {
+          priority: 4096
+          direction: 'Inbound'
+          access: 'Deny'
+          protocol: '*'
+          sourceAddressPrefix: '*'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '*'
+        }
+      }
+    ]
+  }
+}
+
 // ========== Virtual Network ==========
 resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: vnetName
@@ -619,6 +667,22 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
           ] : []
         }
       }
+      {
+        name: bastionSubnetName
+        properties: {
+          addressPrefix: bastionSubnetPrefix
+          // Bastion subnet doesn't use NSG
+        }
+      }
+      {
+        name: jumpboxSubnetName
+        properties: {
+          addressPrefix: jumpboxSubnetPrefix
+          networkSecurityGroup: deployBastion ? {
+            id: jumpboxNSG.id
+          } : null
+        }
+      }
     ]
   }
 }
@@ -633,3 +697,5 @@ output aksSubnetId string = '${vnet.id}/subnets/${aksSubnetName}'
 output privateEndpointSubnetId string = '${vnet.id}/subnets/${privateEndpointSubnetName}'
 output acaInfrastructureSubnetId string = '${vnet.id}/subnets/${acaInfrastructureSubnetName}'
 output apimSubnetId string = '${vnet.id}/subnets/${apimSubnetName}'
+output bastionSubnetId string = deployBastion ? '${vnet.id}/subnets/${bastionSubnetName}' : ''
+output jumpboxSubnetId string = deployBastion ? '${vnet.id}/subnets/${jumpboxSubnetName}' : ''
