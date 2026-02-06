@@ -49,15 +49,6 @@ resource "databricks_metastore" "primary" {
     data.azurerm_storage_account.uc_metastore.name)
 }
 
-# ========== Import existing metastore if found ==========
-import {
-  to = databricks_metastore.primary[0]
-  id = local.existing_id
-  
-  # Only import if metastore exists
-  for_each = local.metastore_exists ? toset([local.existing_id]) : toset([])
-}
-
 locals {
   metastore_id = local.metastore_exists ? local.existing_id : databricks_metastore.primary[0].id
 }
