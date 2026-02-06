@@ -29,7 +29,7 @@ variable "databricks_resource_group_name" {
 
 variable "databricks_workspace_id" {
   description = "Databricks workspace ID (numeric)"
-  type        = string
+  type        = number
 }
 
 variable "databricks_workspace_host" {
