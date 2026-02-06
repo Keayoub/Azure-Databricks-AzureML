@@ -65,6 +65,7 @@ resource "databricks_metastore" "primary" {
   provider      = databricks.accounts
   count         = local.metastore_exists ? 0 : 1
   name          = "metastore-${var.environment_name}"
+  region        = var.databricks_region
   force_destroy = true
 
   storage_root = format("abfss://%s@%s.dfs.core.windows.net/",

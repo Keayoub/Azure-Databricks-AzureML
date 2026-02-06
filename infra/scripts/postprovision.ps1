@@ -42,6 +42,26 @@ $WORKSPACE_DETAILS = $(az databricks workspace list `
 $WORKSPACE_REGION = $WORKSPACE_DETAILS.location
 Write-Host "  ✓ Region: $WORKSPACE_REGION" -ForegroundColor Green
 
+# Map Azure region to Databricks region code
+$DATABRICKS_REGION_MAP = @{
+  "canadaeast"     = "ca-central-1"
+  "eastus"         = "us-east-1"
+  "westus"         = "us-west-2"
+  "northeurope"    = "eu-west-1"
+  "westeurope"     = "eu-west-1"
+  "uksouth"        = "eu-west-1"
+  "southeastasia"  = "ap-southeast-1"
+  "eastasia"       = "ap-northeast-1"
+}
+
+$DATABRICKS_REGION = $DATABRICKS_REGION_MAP[$WORKSPACE_REGION]
+if (-not $DATABRICKS_REGION) {
+  Write-Host "ERROR: Unsupported region for Databricks: $WORKSPACE_REGION" -ForegroundColor Red
+  Write-Host "Supported regions: $($DATABRICKS_REGION_MAP.Keys -join ', ')" -ForegroundColor Red
+  exit 1
+}
+Write-Host "  ✓ Databricks Region: $DATABRICKS_REGION" -ForegroundColor Green
+
 # Parse storage outputs from Bicep
 $STORAGE_OUTPUTS = $env:storageOutputs | ConvertFrom-Json
 $STORAGE_ACCOUNT_NAME = $STORAGE_OUTPUTS.storageAccountName.value
@@ -123,6 +143,7 @@ databricks_workspace_host      = "$DATABRICKS_WORKSPACE_HOST"
 metastore_storage_name         = "$STORAGE_ACCOUNT_NAME"
 access_connector_name          = "$ACCESS_CONNECTOR_NAME"
 databricks_account_id          = "$DATABRICKS_ACCOUNT_ID"
+databricks_region              = "$DATABRICKS_REGION"
 "@
 
 Set-Content -Path "terraform.tfvars" -Value $tfvars

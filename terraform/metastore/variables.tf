@@ -42,6 +42,11 @@ variable "databricks_account_id" {
   type        = string
 }
 
+variable "databricks_region" {
+  description = "Databricks region code (e.g., ca-central-1 for Canada Central)"
+  type        = string
+}
+
 variable "metastore_storage_name" {
   description = "Storage account name for metastore"
   type        = string
