@@ -3,7 +3,6 @@
 // No public IP - accessible only through Azure Bastion
 
 param location string
-param projectName string
 param environmentName string
 param subnetId string
 param adminUsername string = 'azureadmin'
@@ -18,7 +17,7 @@ param vmSize string = 'Standard_D2s_v3'
 @allowed(['2019-Datacenter', '2022-Datacenter', '2022-datacenter-azure-edition'])
 param windowsOSVersion string = '2022-datacenter-azure-edition'
 
-var vmName = 'vm-jumpbox-${environmentName}-${projectName}'
+var vmName = 'vm-jmp-${environmentName}' // Shortened to fit 15 char Windows limit
 var nicName = 'nic-${vmName}'
 var osDiskName = '${vmName}-osdisk'
 

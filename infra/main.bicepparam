@@ -29,8 +29,8 @@ param apimPublisherEmail = 'admin@yourdomain.com'
 param apimPublisherName = 'Your Organization'
 
 // Bastion and Jumpbox Configuration (Optional)
-param deployBastion = false
-param deployJumpbox = false
+param deployBastion = true
+param deployJumpbox = true
 param jumpboxAdminUsername = 'azureadmin'
 param jumpboxAdminPassword = '' // Required if deployJumpbox = true
 

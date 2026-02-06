@@ -248,7 +248,6 @@ module jumpbox 'components/compute/jumpbox.bicep' = if (deployJumpbox) {
   name: 'jumpbox-deployment'
   params: {
     location: location
-    projectName: projectName
     environmentName: environmentName
     subnetId: networking.outputs.jumpboxSubnetId
     adminUsername: jumpboxAdminUsername
