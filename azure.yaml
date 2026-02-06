@@ -4,6 +4,7 @@
 name: secure-databricks-azureml
 metadata:
   template: secure-databricks-azureml@0.0.1-beta
+  description: Secure Azure Databricks with Unity Catalog, Azure ML, and AI Foundry
 
 # Infra configuration
 infra:
@@ -11,31 +12,23 @@ infra:
   path: infra
   module: main
 
-# Pipeline configuration
+# Pipeline configuration (for CI/CD integration)
 pipeline:
   provider: azdo
 
-# Hook configuration
+# Hook configuration - Deployment automation
 hooks:
+  # Pre-provision: Validation and setup
   preprovision:
     shell: pwsh
-    run: |
-      Write-Host "Validating deployment configuration..." -ForegroundColor Green
+    run: pwsh ./infra/scripts/validate.ps1
   
+  # Post-provision: Create Unity Catalog metastore (Phase 1 complete)
   postprovision:
     shell: pwsh
-    run: |
-      Write-Host "========================================" -ForegroundColor Green
-      Write-Host "Creating Unity Catalog Metastore" -ForegroundColor Green
-      Write-Host "========================================" -ForegroundColor Green
-      Write-Host ""
-      ./infra/scripts/postprovision.ps1
+    run: pwsh ./infra/scripts/postprovision.ps1
   
+  # Post-deploy: Deploy UC components (Phase 2 complete)
   postdeploy:
     shell: pwsh
-    run: |
-      Write-Host "========================================" -ForegroundColor Green
-      Write-Host "Deploying Unity Catalog Components" -ForegroundColor Green
-      Write-Host "========================================" -ForegroundColor Green
-      Write-Host ""
-      ./infra/scripts/postdeploy.ps1
+    run: pwsh ./infra/scripts/postdeploy.ps1

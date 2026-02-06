@@ -140,26 +140,90 @@ Write-Host ""
 Write-Host "Running: terraform init..." -ForegroundColor Cyan
 terraform init -upgrade
 
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform init failed" -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+Write-Host "  ✓ Terraform initialized" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "Running: terraform validate..." -ForegroundColor Cyan
+terraform validate
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform validate failed" -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+Write-Host "  ✓ Terraform configuration valid" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "Running: terraform plan..." -ForegroundColor Cyan
 terraform plan -out=tfplan
 
-Write-Host ""
-Write-Host "Running: terraform apply (auto-approved)..." -ForegroundColor Cyan
-terraform apply tfplan
-
-if ($LASTEXITCODE -eq 0) {
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform plan failed" -ForegroundColor Red
   Write-Host ""
-  Write-Host "========================================================" -ForegroundColor Green
-  Write-Host "✓ Metastore deployment completed successfully!" -ForegroundColor Green
-  Write-Host "========================================================" -ForegroundColor Green
-} else {
-  Write-Host ""
-  Write-Host "========================================================" -ForegroundColor Red
-  Write-Host "✗ Metastore deployment failed!" -ForegroundColor Red
-  Write-Host "========================================================" -ForegroundColor Red
+  Write-Host "Common issues:" -ForegroundColor Yellow
+  Write-Host "  1. Access Connector not found - check SHARED_RESOURCE_GROUP env var" -ForegroundColor Yellow
+  Write-Host "  2. Metastore already exists - use 'terraform import' to adopt it" -ForegroundColor Yellow
+  Write-Host "  3. Account ID invalid - set DATABRICKS_ACCOUNT_ID correctly" -ForegroundColor Yellow
   Pop-Location
   exit 1
 }
 
+Write-Host ""
+Write-Host "========================================================" -ForegroundColor Cyan
+Write-Host "Metastore Deployment Summary:" -ForegroundColor Cyan
+Write-Host "========================================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  ACCOUNT ID       : $DATABRICKS_ACCOUNT_ID" -ForegroundColor Cyan
+Write-Host "  WORKSPACE ID     : $DATABRICKS_WORKSPACE_ID" -ForegroundColor Cyan
+Write-Host "  WORKSPACE HOST   : $DATABRICKS_WORKSPACE_HOST" -ForegroundColor Cyan
+Write-Host "  REGION           : $WORKSPACE_REGION" -ForegroundColor Cyan
+Write-Host "  ACCESS CONNECTOR : $ACCESS_CONNECTOR_NAME" -ForegroundColor Cyan
+Write-Host "  STORAGE ACCOUNT  : $STORAGE_ACCOUNT_NAME" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Review the plan above to verify resource creation." -ForegroundColor Yellow
+Write-Host ""
+
+Write-Host "Running: terraform apply (auto-approved)..." -ForegroundColor Cyan
+terraform apply tfplan
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Host ""
+  Write-Host "========================================================" -ForegroundColor Red
+  Write-Host "✗ Metastore deployment failed!" -ForegroundColor Red
+  Write-Host "========================================================" -ForegroundColor Red
+  Write-Host ""
+  Write-Host "Troubleshooting:" -ForegroundColor Yellow
+  Write-Host "  1. Check tfplan for error details" -ForegroundColor Yellow
+  Write-Host "  2. Verify Access Connector exists in $SHARED_RESOURCE_GROUP" -ForegroundColor Yellow
+  Write-Host "  3. Verify Account ID is correct: $DATABRICKS_ACCOUNT_ID" -ForegroundColor Yellow
+  Write-Host "  4. Check Databricks admin console for metastore configuration" -ForegroundColor Yellow
+  Write-Host "  5. Review logs: cat terraform.log" -ForegroundColor Yellow
+  Write-Host ""
+  Pop-Location
+  exit 1
+}
+
+Write-Host ""
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host "✓ Metastore deployment completed successfully!" -ForegroundColor Green
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Metastore Configuration:" -ForegroundColor Cyan
+Write-Host "  Metastore Name   : metastore-$PROJECT_NAME" -ForegroundColor Cyan
+Write-Host "  Region           : $WORKSPACE_REGION" -ForegroundColor Cyan
+Write-Host "  Workspace        : $DATABRICKS_WORKSPACE_ID is now assigned" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Next Steps:" -ForegroundColor Cyan
+Write-Host "  1. Verify in Databricks: Catalog browser → Settings → Metastore" -ForegroundColor Cyan
+Write-Host "  2. Run 'azd deploy' to deploy UC catalogs and schemas" -ForegroundColor Cyan
+Write-Host "  3. Review DEPLOYMENT-PROCESS.md for verification steps" -ForegroundColor Cyan
+Write-Host ""
+
 Pop-Location
+
+Write-Host "Returning to project root: $PROJECT_ROOT" -ForegroundColor Green

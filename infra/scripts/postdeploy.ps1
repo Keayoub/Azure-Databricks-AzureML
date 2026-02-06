@@ -103,30 +103,80 @@ Write-Host ""
 Write-Host "Running: terraform init..." -ForegroundColor Cyan
 terraform init -upgrade
 
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform init failed" -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+Write-Host "  ✓ Terraform initialized" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "Running: terraform validate..." -ForegroundColor Cyan
+terraform validate
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform validate failed" -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+Write-Host "  ✓ Terraform configuration valid" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "Running: terraform plan..." -ForegroundColor Cyan
 terraform plan -out=tfplan
 
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "ERROR: terraform plan failed" -ForegroundColor Red
+  Pop-Location
+  exit 1
+}
+Write-Host "  ✓ Plan created and saved to tfplan" -ForegroundColor Green
+
 Write-Host ""
-Write-Host "Review the plan above. Press Enter to apply or Ctrl+C to cancel..."
+Write-Host "========================================================" -ForegroundColor Cyan
+Write-Host "Change Summary:" -ForegroundColor Cyan
+Write-Host "========================================================" -ForegroundColor Cyan
+Write-Host "Terraform will create/modify resources as shown above." -ForegroundColor Yellow
+Write-Host "Review the plan to ensure resources are correct." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  WORKSPACE HOST  : $DATABRICKS_WORKSPACE_HOST" -ForegroundColor Cyan
+Write-Host "  REGION          : $WORKSPACE_REGION" -ForegroundColor Cyan
+Write-Host "  ENVIRONMENT     : $ENV_NAME" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Press Enter to apply or Ctrl+C to cancel..."
 Read-Host
 
 Write-Host ""
 Write-Host "Running: terraform apply..." -ForegroundColor Cyan
-terraform apply tfplan
+terraform apply -auto-approve tfplan
 
-if ($LASTEXITCODE -eq 0) {
-  Write-Host ""
-  Write-Host "========================================================" -ForegroundColor Green
-  Write-Host "✓ UC components deployment completed successfully!" -ForegroundColor Green
-  Write-Host "========================================================" -ForegroundColor Green
-} else {
+if ($LASTEXITCODE -ne 0) {
   Write-Host ""
   Write-Host "========================================================" -ForegroundColor Red
   Write-Host "✗ UC components deployment failed!" -ForegroundColor Red
   Write-Host "========================================================" -ForegroundColor Red
+  Write-Host ""
+  Write-Host "Troubleshooting:" -ForegroundColor Yellow
+  Write-Host "  1. Check tfplan for errors" -ForegroundColor Yellow
+  Write-Host "  2. Verify Databricks workspace is accessible" -ForegroundColor Yellow
+  Write-Host "  3. Check Databricks account and metastore settings" -ForegroundColor Yellow
+  Write-Host "  4. Review logs: cat terraform.log" -ForegroundColor Yellow
+  Write-Host ""
   Pop-Location
   exit 1
 }
 
+Write-Host ""
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host "✓ UC components deployment completed successfully!" -ForegroundColor Green
+Write-Host "========================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Next Steps:" -ForegroundColor Cyan
+Write-Host "  1. Visit Databricks workspace: $DATABRICKS_WORKSPACE_HOST" -ForegroundColor Cyan
+Write-Host "  2. Check Catalog browser for new catalogs and schemas" -ForegroundColor Cyan
+Write-Host "  3. Review DEPLOYMENT-PROCESS.md for verification steps" -ForegroundColor Cyan
+Write-Host ""
+
 Pop-Location
+
+Write-Host "Returning to project root: $PROJECT_ROOT" -ForegroundColor Green
