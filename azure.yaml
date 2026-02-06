@@ -22,11 +22,20 @@ hooks:
     run: |
       Write-Host "Validating deployment configuration..." -ForegroundColor Green
   
+  postprovision:
+    shell: pwsh
+    run: |
+      Write-Host "========================================" -ForegroundColor Green
+      Write-Host "Creating Unity Catalog Metastore" -ForegroundColor Green
+      Write-Host "========================================" -ForegroundColor Green
+      Write-Host ""
+      ./infra/scripts/postprovision.ps1
+  
   postdeploy:
     shell: pwsh
     run: |
       Write-Host "========================================" -ForegroundColor Green
-      Write-Host "Deploying Terraform Unity Catalog" -ForegroundColor Green
+      Write-Host "Deploying Unity Catalog Components" -ForegroundColor Green
       Write-Host "========================================" -ForegroundColor Green
       Write-Host ""
       ./infra/scripts/postdeploy.ps1

@@ -1,8 +1,3 @@
-variable "subscription_id" {
-  description = "Azure subscription ID"
-  type        = string
-}
-
 variable "azure_region" {
   description = "Azure region for UC resources"
   type        = string
@@ -18,35 +13,9 @@ variable "environment_name" {
   }
 }
 
-variable "project_name" {
-  description = "Project name for naming resources"
-  type        = string
-}
-
-variable "shared_resource_group_name" {
-  description = "Shared resource group name (from Bicep deployment)"
-  type        = string
-}
-
-variable "databricks_workspace_id" {
-  description = "Databricks workspace ID (from Bicep deployment)"
-  type        = string
-}
-
 variable "databricks_workspace_host" {
   description = "Databricks workspace host URL (from Bicep deployment)"
   type        = string
-}
-
-variable "databricks_account_id" {
-  description = "Databricks account ID"
-  type        = string
-}
-
-variable "metastore_owner" {
-  description = "Principal name that owns the metastore (AAD group)"
-  type        = string
-  default     = "account_unity_admin"
 }
 
 variable "catalogs" {
@@ -90,14 +59,4 @@ variable "tags" {
     "project" : "databricks-azureml"
     "managed-by" : "terraform"
   }
-}
-
-variable "metastore_storage_name" {
-  description = "Name of the existing storage account for UC metastore (from Bicep deployment)"
-  type        = string
-}
-
-variable "access_connector_name" {
-  description = "Name of the existing Databricks Access Connector (from Bicep deployment)"
-  type        = string
 }

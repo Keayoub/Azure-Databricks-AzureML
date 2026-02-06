@@ -1,103 +1,91 @@
 # Databricks Unity Catalog - Terraform Implementation
 
-Complete Terraform configuration for provisioning Databricks Unity Catalog infrastructure on Azure.
+Two-phase Terraform configuration for Azure Databricks Unity Catalog.
 
-## Quick Start
+## 🏗️ Architecture
 
-### 1. Prerequisites
+### Two-Phase Deployment
 
-```bash
-# Ensure Bicep deployment completed
-az resource list --resource-group "your-rg" \
-  --resource-type "Microsoft.Databricks/workspaces"
+```
+Phase 1: azd provision          Phase 2: azd deploy
+┌─────────────────┐            ┌─────────────────┐
+│ Bicep (Azure)   │            │ Skip Bicep      │
+│ - Workspace     │            │                 │
+│ - Storage       │            │                 │
+│ - Networking    │            │                 │
+└────────┬────────┘            └─────────────────┘
+         │                              │
+         ↓                              ↓
+┌─────────────────┐            ┌─────────────────┐
+│ TF Metastore    │            │ TF UC Catalogs  │
+│ - Create/Ref    │            │ - Dev/QA/Prod   │
+│ - Assign        │            │ - Schemas       │
+└─────────────────┘            │ - Volumes       │
+                               └─────────────────┘
 ```
 
-### 2. Deploy with azd (Recommended)
+### Directory Structure
 
-```bash
-# Set environment variable
-export DATABRICKS_ACCOUNT_ID="your-account-id"
-
-# Deploy Bicep + Terraform in one command
-cd d:\Databricks\dbx-demos\Azure-Databricks-AzureML
-azd provision
+```
+terraform/
+├── metastore/          # Phase 1: Metastore (one-time)
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── README.md
+│
+├── environments/       # Phase 2: UC components (repeatable)
+│   ├── main.tf
+│   ├── providers.tf
+│   ├── variables.tf
+│   └── outputs.tf
+│
+└── modules/
+    ├── adb-uc-catalogs/    # Shared catalog module
+    └── adb-uc-volumes/     # Shared volumes module
 ```
 
-This automatically:
-1. Deploys Bicep infrastructure (networking, workspace, storage)
-2. Runs postdeploy hook that deploys Terraform UC layer
-3. Creates complete Databricks Lakehouse
+## 🚀 Quick Start
 
-See [TERRAFORM-AZD-INTEGRATION.md](../docs/TERRAFORM-AZD-INTEGRATION.md) for details.
+### Option 1: Automated (Recommended)
 
-### 3. Or Deploy Terraform Manually
+```powershell
+# Full deployment
+azd provision  # Bicep + Metastore
+azd deploy     # UC components
 
-```bash
-cd terraform
+# Update UC catalogs/schemas only
+azd deploy
+```
 
-# Create terraform.tfvars (populate from Bicep outputs)
-cat > terraform.tfvars <<EOF
-subscription_id                = "your-subscription-id"
-azure_region                   = "Canada East"
-environment_name               = "dev"
-project_name                   = "databricks"
-shared_resource_group_name     = "your-rg"
-databricks_workspace_id        = "your-workspace-id"
-databricks_workspace_host      = "https://your-workspace.canadaeast.azuredatabricks.net"
-databricks_account_id          = "your-account-id"
-metastore_storage_name         = "adbmetastore123"
-metastore_name                 = "uc_metastore_dev"
-access_connector_name          = "adb-access-connector"
-EOF
+### Option 2: Manual Execution
 
-# Deploy
+**Phase 1: Metastore**
+```powershell
+cd terraform/metastore
 terraform init
-terraform plan
-terraform apply
+terraform apply -var-file=terraform.tfvars
 ```
 
-## Architecture
-
-```
-Azure Infrastructure (Bicep)
-├── Resource Groups
-│   ├── Shared (networking, storage, monitoring)
-│   ├── Databricks (workspace, managed resources)
-│   ├── AI Platform (Azure ML, AI Foundry)
-│   └── Compute (AKS, containers)
-└── Databricks Workspace (dbw-dev-dbxaml)
-
-Databricks Unity Catalog (Terraform) ← You are here
-├── UC Metastore (primary)
-│   ├── Storage Account (ADLS Gen2)
-│   ├── Access Connector (Managed Identity)
-│   └── Metastore Configuration
-├── Catalogs & Schemas
-│   ├── main (default)
-│   │   ├── default
-│   │   ├── raw
-│   │   └── processed
-│   └── analytics
-│       ├── reports
-│       └── metrics
-└── Volumes (External Data Storage)
+**Phase 2: UC Components**
+```powershell
+cd terraform/environments
+terraform init
+terraform apply -var-file=terraform.tfvars
 ```
 
-## Prerequisites
+## 📋 Prerequisites
 
-1. **Azure Setup:**
-   - Azure CLI installed and authenticated: `az login`
-   - Subscription ID and resource groups created (from Bicep deployment)
-   
-2. **Terraform Setup:**
-   - Terraform v1.3+
-   - Azure Provider v3.70+
-   - Databricks Provider v1.30+
+1. **Azure CLI**: `az login` authenticated
+2. **Terraform**: v1.9.0+
+3. **Bicep Deployment**: Completed successfully
+4. **Environment Variable**: `$env:DATABRICKS_ACCOUNT_ID = "your-account-id"`
 
-3. **Databricks Setup:**
-   - Workspace deployed (from Bicep)
-   - Account ID (from Databricks account console)
-   - AAD groups created in Databricks (e.g., `account_unity_admin`)
+## 📖 Documentation
+
+- **[DEPLOYMENT-WORKFLOW.md](../docs/DEPLOYMENT-WORKFLOW.md)**: Detailed two-phase workflow
+- **[TERRAFORM-QUICK-START.md](docs/TERRAFORM-QUICK-START.md)**: Getting started guide
+- **[TERRAFORM-QUICK-REFERENCE.md](docs/TERRAFORM-QUICK-REFERENCE.md)**: Command reference
 
 4. **Information from Bicep Deployment:**
    - Shared resource group name: `rg-dev-dbxaml-shared`
