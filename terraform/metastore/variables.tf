@@ -12,6 +12,11 @@ variable "azure_region" {
   type        = string
 }
 
+variable "project_name" {
+  description = "Project name (e.g., dbxaml)"
+  type        = string
+}
+
 variable "environment_name" {
   description = "Environment name (dev/staging/prod)"
   type        = string

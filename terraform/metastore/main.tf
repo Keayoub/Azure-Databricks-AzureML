@@ -53,7 +53,7 @@ data "databricks_metastores" "available" {
 }
 
 locals {
-  metastore_name   = "metastore-${var.environment_name}"
+  metastore_name   = "metastore-${var.project_name}"
   metastore_exists = contains(keys(data.databricks_metastores.available.ids), local.metastore_name)
   existing_id      = local.metastore_exists ? data.databricks_metastores.available.ids[local.metastore_name] : null
   
@@ -64,7 +64,7 @@ locals {
 resource "databricks_metastore" "primary" {
   provider      = databricks.accounts
   count         = local.metastore_exists ? 0 : 1
-  name          = "metastore-${var.environment_name}"
+  name          = "metastore-${var.project_name}"
   region        = var.databricks_region
   force_destroy = true
 
@@ -81,7 +81,7 @@ locals {
 resource "databricks_metastore_data_access" "uc_access" {
   provider     = databricks.accounts
   metastore_id  = local.metastore_id
-  name          = "uc-access-connector-${var.environment_name}"
+  name          = "uc-access-connector-${var.project_name}"
   force_destroy = true
 
   azure_managed_identity {
