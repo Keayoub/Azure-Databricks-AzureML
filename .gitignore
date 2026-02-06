@@ -59,6 +59,10 @@ env/
 override.tf
 *.tfvars
 *.tfvars.json
+terraform/**/.terraform/
+terraform/**/*.tfstate*
+terraform/**/.terraform.lock.hcl
+terraform/**/tfplan
 
 # Secrets and credentials
 *.key
