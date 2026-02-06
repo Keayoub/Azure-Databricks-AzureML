@@ -128,16 +128,22 @@ Set-Content -Path "terraform.tfvars" -Value $tfvars
 Write-Host "  ✓ Created metastore terraform.tfvars" -ForegroundColor Green
 
 Write-Host ""
+Write-Host "Cleaning Terraform cache..." -ForegroundColor Cyan
+Remove-Item -Path ".terraform" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path ".terraform.lock.hcl" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "tfplan" -Force -ErrorAction SilentlyContinue
+
+Write-Host ""
 Write-Host "Running: terraform init..." -ForegroundColor Cyan
 terraform init -upgrade
 
 Write-Host ""
 Write-Host "Running: terraform plan..." -ForegroundColor Cyan
-terraform plan -out=tfplan -var-file=terraform.tfvars
+terraform plan -out=tfplan
 
 Write-Host ""
 Write-Host "Running: terraform apply (auto-approved)..." -ForegroundColor Cyan
-terraform apply -auto-approve tfplan
+terraform apply tfplan
 
 if ($LASTEXITCODE -eq 0) {
   Write-Host ""
