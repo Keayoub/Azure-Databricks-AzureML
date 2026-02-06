@@ -107,7 +107,9 @@ resource "databricks_metastore_assignment" "workspace" {
 
 # Set the default namespace (replacement for default_catalog_name)
 resource "databricks_default_namespace_setting" "workspace" {
-  namespace = "main"
+  namespace {
+    value = "main"
+  }
 
   depends_on = [
     databricks_metastore_assignment.workspace
