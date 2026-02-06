@@ -1,11 +1,16 @@
 output "metastore_id" {
-  description = "ID of the created UC metastore"
-  value       = databricks_metastore.primary.id
+  description = "ID of the UC metastore (auto-detected existing or newly created)"
+  value       = local.metastore_id
 }
 
 output "metastore_name" {
-  description = "Name of the created UC metastore"
-  value       = databricks_metastore.primary.name
+  description = "Name of the UC metastore"
+  value       = local.has_existing_metastore ? "existing-metastore" : databricks_metastore.primary[0].name
+}
+
+output "is_existing_metastore" {
+  description = "Whether an existing metastore was used (true) or new one created (false)"
+  value       = local.has_existing_metastore
 }
 
 output "storage_account_id" {
