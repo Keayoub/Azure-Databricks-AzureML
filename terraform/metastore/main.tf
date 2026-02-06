@@ -54,7 +54,8 @@ data "databricks_metastores" "available" {
 
 locals {
   metastore_exists = length(data.databricks_metastores.available.ids) > 0
-  existing_id      = local.metastore_exists ? data.databricks_metastores.available.ids[0] : null
+  metastore_name   = "metastore-${var.environment_name}"
+  existing_id      = local.metastore_exists ? try(data.databricks_metastores.available.ids[local.metastore_name], values(data.databricks_metastores.available.ids)[0]) : null
   
   metastore_container_name = "unity-catalog"
 }
