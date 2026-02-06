@@ -21,17 +21,16 @@ provider "azurerm" {
   use_cli = true
 }
 
-# Databricks account-level provider (for metastore operations)
+# Databricks workspace provider with Azure authentication
+# This single provider handles both workspace and account-level operations in Azure Databricks
 provider "databricks" {
-  alias      = "account"
-  host       = "https://accounts.azuredatabricks.net"
-  account_id = var.databricks_account_id
-  auth_type  = "azure-cli"
+  alias = "workspace"
+  host  = var.databricks_workspace_host
 }
 
-# Databricks workspace-level provider (for workspace resources)
+# Account-level alias points to the same workspace provider
+# In Azure Databricks, account-level operations use workspace authentication
 provider "databricks" {
-  alias     = "workspace"
-  host      = var.databricks_workspace_host
-  auth_type = "azure-cli"
+  alias = "account"
+  host  = var.databricks_workspace_host
 }

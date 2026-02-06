@@ -124,9 +124,9 @@ Then run: `azd provision`
 ## 📚 Full Documentation
 
 - **[README.md](./README.md)** - Complete project guide
-- **[DEPLOYMENT-COMPLETE.md](./DEPLOYMENT-COMPLETE.md)** - What was deployed
-- **[docs/POST-DEPLOYMENT.md](./docs/POST-DEPLOYMENT.md)** - Configuration checklist
-- **[docs/PROJECT-STRUCTURE.md](./docs/PROJECT-STRUCTURE.md)** - Project layout
+- **[docs/TERRAFORM-AZD-INTEGRATION.md](./docs/TERRAFORM-AZD-INTEGRATION.md)** - Deployment architecture
+- **[docs/SECURITY-AUDIT.md](./docs/SECURITY-AUDIT.md)** - Security & networking details
+- **[terraform/README.md](./terraform/README.md)** - Unity Catalog configuration
 
 ---
 

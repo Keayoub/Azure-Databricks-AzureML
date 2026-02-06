@@ -189,10 +189,9 @@ Terraform UC layer: **5-10 minutes**
 
 ## 📖 Documentation
 
-- [Bicep Deployment Guide](./docs/DEPLOYMENT.md)
-- [Unity Catalog Setup (Terraform)](./terraform/README.md) ← **New!**
-- [Post-Deployment Configuration](./docs/POST-DEPLOYMENT.md)
-- [Project Structure](./docs/PROJECT-STRUCTURE.md)
+- [Terraform + azd Integration Guide](./docs/TERRAFORM-AZD-INTEGRATION.md) - Two-phase deployment
+- [Security & Private Connectivity Audit](./docs/SECURITY-AUDIT.md) - Network security details
+- [Terraform Unity Catalog Setup](./terraform/README.md) - UC configuration guide
 
 
 ## 🔧 Common Commands
@@ -259,7 +258,7 @@ databricks workspace list
 
 For issues or questions:
 
-1. Check [POST-DEPLOYMENT.md](./docs/POST-DEPLOYMENT.md)
+1. Check [Terraform + azd Integration Guide](./docs/TERRAFORM-AZD-INTEGRATION.md)
 2. Review deployment logs: `azd provision --debug`
 3. Check Azure Portal for resource-specific errors
 
