@@ -1,11 +1,11 @@
-output "metastore_id" {
-  description = "Unity Catalog metastore ID"
-  value       = module.uc_metastore.metastore_id
-}
+# ========================================
+# Unity Catalog Components Outputs
+# ========================================
+# Note: Metastore outputs are in terraform/metastore/outputs.tf
 
-output "metastore_name" {
-  description = "Unity Catalog metastore name"
-  value       = module.uc_metastore.metastore_name
+output "metastore_id" {
+  description = "Unity Catalog metastore ID (referenced from existing)"
+  value       = local.metastore_id
 }
 
 output "catalogs" {
@@ -21,14 +21,4 @@ output "schemas" {
 output "volumes" {
   description = "Created volumes"
   value       = module.uc_volumes.volumes
-}
-
-output "storage_account_id" {
-  description = "UC metastore storage account ID"
-  value       = module.uc_metastore.storage_account_id
-}
-
-output "access_connector_id" {
-  description = "UC access connector ID"
-  value       = module.uc_metastore.access_connector_id
 }

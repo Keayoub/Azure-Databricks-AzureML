@@ -5,11 +5,12 @@
 # Runs during: azd deploy (postdeploy hook)
 # Prerequisites: Metastore must exist (created via azd provision)
 
-# ========== Get Existing Metastore ==========
-data "databricks_metastores" "available" {}
+# ========== Get Workspace Metastore Assignment ==========
+# Query the metastore assigned to this workspace
+data "databricks_current_metastore" "this" {}
 
 locals {
-  metastore_id = data.databricks_metastores.available.ids[0]
+  metastore_id = data.databricks_current_metastore.this.id
 }
 
 # ========== UC Catalogs and Schemas Module ==========
