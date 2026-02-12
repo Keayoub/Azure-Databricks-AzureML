@@ -321,6 +321,34 @@ module securityRbac 'components/security/security-rbac.bicep' = {
   }
 }
 
+// NSG Flow Logs (Network Monitoring)
+module nsgFlowLogs 'components/networking/nsg-flow-logs.bicep' = {
+  scope: sharedResourceGroup
+  name: 'nsg-flowlogs-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    tags: tags
+    networkSecurityGroupIds: networking.outputs.nsgIds
+    storageAccountName: storage.outputs.storageAccountName
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    enableTrafficAnalytics: true
+    retentionDays: 30
+  }
+}
+
+// Azure Policy Assignments (Security & Governance)
+module policyAssignments 'components/security/policy-assignments.bicep' = {
+  scope: sharedResourceGroup
+  name: 'policy-assignments-deployment'
+  params: {
+    location: location
+    environmentName: environmentName
+    sharedResourceGroupName: sharedResourceGroup.name
+  }
+}
+
 // App Configuration (optional)
 module appConfig 'components/app-config/app-config.bicep' = if (deployAppConfiguration) {
   scope: sharedResourceGroup

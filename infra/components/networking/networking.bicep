@@ -606,9 +606,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
         name: aksSubnetName
         properties: {
           addressPrefix: aksSubnetPrefix
-          networkSecurityGroup: deployAKS ? {
-            id: aksNSG.id
-          } : null
+          networkSecurityGroup: deployAKS
+            ? {
+                id: aksNSG.id
+              }
+            : null
           serviceEndpoints: [
             {
               service: 'Microsoft.Storage'
@@ -654,17 +656,19 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
           networkSecurityGroup: {
             id: deployAPIM ? apimNSG.id : privateEndpointNSG.id // Fallback to PE NSG if APIM not deployed
           }
-          serviceEndpoints: deployAPIM ? [
-            {
-              service: 'Microsoft.Storage'
-            }
-            {
-              service: 'Microsoft.KeyVault'
-            }
-            {
-              service: 'Microsoft.Sql'
-            }
-          ] : []
+          serviceEndpoints: deployAPIM
+            ? [
+                {
+                  service: 'Microsoft.Storage'
+                }
+                {
+                  service: 'Microsoft.KeyVault'
+                }
+                {
+                  service: 'Microsoft.Sql'
+                }
+              ]
+            : []
         }
       }
       {
@@ -678,9 +682,11 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
         name: jumpboxSubnetName
         properties: {
           addressPrefix: jumpboxSubnetPrefix
-          networkSecurityGroup: deployBastion ? {
-            id: jumpboxNSG.id
-          } : null
+          networkSecurityGroup: deployBastion
+            ? {
+                id: jumpboxNSG.id
+              }
+            : null
         }
       }
     ]
@@ -699,3 +705,30 @@ output acaInfrastructureSubnetId string = '${vnet.id}/subnets/${acaInfrastructur
 output apimSubnetId string = '${vnet.id}/subnets/${apimSubnetName}'
 output bastionSubnetId string = deployBastion ? '${vnet.id}/subnets/${bastionSubnetName}' : ''
 output jumpboxSubnetId string = deployBastion ? '${vnet.id}/subnets/${jumpboxSubnetName}' : ''
+
+// NSG IDs for flow logging and monitoring
+output nsgIds array = concat(
+  [
+    databricksPublicNSG.id
+    databricksPrivateNSG.id
+    azureMLComputeNSG.id
+    privateEndpointNSG.id
+    acaInfrastructureNSG.id
+  ],
+  deployAKS ? [aksNSG.id] : [],
+  deployAPIM ? [apimNSG.id] : [],
+  deployBastion ? [jumpboxNSG.id] : []
+)
+
+output nsgNames array = concat(
+  [
+    databricksPublicNSG.name
+    databricksPrivateNSG.name
+    azureMLComputeNSG.name
+    privateEndpointNSG.name
+    acaInfrastructureNSG.name
+  ],
+  deployAKS ? [aksNSG.name] : [],
+  deployAPIM ? [apimNSG.name] : [],
+  deployBastion ? [jumpboxNSG.name] : []
+)
