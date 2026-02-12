@@ -7,6 +7,8 @@ param location string
 param projectName string
 param environmentName string
 param tags object
+@description('Optional storage account id to grant access for Unity Catalog')
+param storageAccountId string = ''
 
 // Variables
 var metastoreName = 'metastore-${projectName}-${environmentName}'
@@ -20,6 +22,7 @@ module accessConnector 'access-connector.bicep' = {
     projectName: projectName
     environmentName: environmentName
     tags: tags
+    storageAccountId: storageAccountId
   }
 }
 

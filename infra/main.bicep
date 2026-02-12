@@ -86,6 +86,9 @@ param apimPublisherName string = 'API Management Admin'
 @description('Your object ID for admin permissions')
 param adminObjectId string
 
+@description('Email address for Azure Monitor alert notifications')
+param alertEmailAddress string = ''
+
 @description('Tags for all resources')
 param tags object = {
   Environment: environmentName
@@ -226,6 +229,7 @@ module accessConnector 'components/databricks/access-connector.bicep' = if (enab
     projectName: projectName
     environmentName: environmentName
     tags: tags
+    storageAccountId: storage.outputs.storageAccountId
   }
 }
 
@@ -396,6 +400,28 @@ module databricks 'components/databricks/databricks.bicep' = {
     publicSubnetName: networking.outputs.databricksPublicSubnetName
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
+  }
+}
+
+module databricksDiagnostics 'components/monitoring/diagnostic-settings.bicep' = {
+  scope: databricksResourceGroup
+  name: 'databricks-diagnostics'
+  params: {
+    databricksWorkspaceId: databricks.outputs.workspaceId
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+  }
+}
+
+module databricksAlerts 'components/monitoring/alerts.bicep' = if (alertEmailAddress != '') {
+  scope: sharedResourceGroup
+  name: 'databricks-alerts'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
+    tags: tags
+    alertEmailAddress: alertEmailAddress
+    databricksWorkspaceId: databricks.outputs.workspaceId
   }
 }
 

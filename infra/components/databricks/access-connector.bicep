@@ -6,6 +6,8 @@ param location string
 param projectName string
 param environmentName string
 param tags object
+@description('Optional storage account id to grant access for Unity Catalog')
+param storageAccountId string = ''
 
 var accessConnectorName = 'ac-${projectName}-${environmentName}'
 
@@ -35,9 +37,11 @@ resource accessConnector 'Microsoft.Databricks/accessConnectors@2023-05-01' = {
 //   --scope /subscriptions/<subId>/resourceGroups/<rgName>/providers/Microsoft.Storage/storageAccounts/<storageName> \
 //   --assignee-principal-type ServicePrincipal
 
-// Commented out to avoid InvalidPrincipalId errors
-/*
-resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = if (storageAccountId != '') {
+  id: storageAccountId
+}
+
+resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (storageAccountId != '') {
   scope: storageAccount
   name: guid(storageAccount.id, accessConnector.id, 'StorageBlobDataContributor')
   properties: {
@@ -46,7 +50,6 @@ resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022
     principalType: 'ServicePrincipal'
   }
 }
-*/
 
 // ========== Outputs ==========
 output accessConnectorId string = accessConnector.id

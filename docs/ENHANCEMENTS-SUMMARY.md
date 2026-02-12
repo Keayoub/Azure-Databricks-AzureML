@@ -195,6 +195,47 @@ azd deploy → UC components deployment
 
 ---
 
+## 📈 Phase 4: Monitoring & Unity Catalog Access Hardening (Feb 2026)
+
+### Databricks Diagnostic Settings
+
+**What Was Implemented:**
+- ✅ Databricks workspace diagnostic settings now forward logs + metrics to Log Analytics
+- ✅ Category group `allLogs` and `AllMetrics` enabled for centralized audit trails
+
+**Files Added:**
+- `infra/components/monitoring/diagnostic-settings.bicep`
+
+### Monitoring Alerts (Databricks)
+
+**What Was Implemented:**
+- ✅ Action Group with email notifications
+- ✅ Activity Log alert for failed administrative operations
+- ✅ Resource Health alert for degraded/unavailable workspace status
+
+**Files Added:**
+- `infra/components/monitoring/alerts.bicep`
+
+### Unity Catalog Access Connector RBAC
+
+**What Was Implemented:**
+- ✅ Storage Blob Data Contributor role assignment for Access Connector
+- ✅ Ensures Unity Catalog can read/write storage via managed identity
+
+**Files Updated:**
+- `infra/components/databricks/access-connector.bicep`
+- `infra/components/databricks/unity-catalog.bicep`
+
+---
+
+## 🧭 Next Sprint Backlog (Planned)
+
+- Managed Private Endpoints (data plane hardening)
+- Customer-Managed Keys for Databricks and Storage
+- Enhanced Cost Monitoring (budget alerts per cluster)
+
+---
+
 ## 🎯 Key Capabilities Achieved
 
 ### Deployment Automation

@@ -330,6 +330,10 @@ Container Apps →
 ✅ **VNet Links**: DNS zones linked to VNet
 ✅ **Name Resolution**: Internal resolution only
 
+### 6. Monitoring & Diagnostics
+✅ **Databricks Diagnostics**: Logs + metrics forwarded to Log Analytics
+✅ **Alerting**: Activity Log alerts for admin failures and resource health
+
 ---
 
 ## Inter-Service Communication Flows
