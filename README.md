@@ -32,23 +32,45 @@ This installs:
 # 1. Validate deployment readiness
 pwsh infra/scripts/validate.ps1
 
-# 2. Get your object ID for Key Vault access
+# 2. Create your parameter file from the example template
+Copy-Item infra/main.example.bicepparam infra/main.bicepparam
+
+# 3. Get your object ID for Key Vault access
 az ad signed-in-user show --query id -o tsv
 
-# 3. Edit infra/main.bicepparam and set:
-#    - adminObjectId (from step 2)
+# 4. Edit infra/main.bicepparam and set:
+#    - adminObjectId (from step 3)
 #    - alertEmailAddress (for monitoring notifications)
+#    Note: main.bicepparam is gitignored - safe to add your real values
 
-# 4. Set your Databricks Account ID (one-time setup)
+# 5. Set your Databricks Account ID (one-time setup)
 # Get it from: https://accounts.azuredatabricks.net
 $env:DATABRICKS_ACCOUNT_ID = "your-account-id"
 
-# 5. Deploy (Bicep + Terraform Unity Catalog automatically)
+# 6. Deploy (Bicep + Terraform Unity Catalog automatically)
 azd provision
 azd deploy
 ```
 
 **Total time: 15-30 minutes** (infrastructure deployment)
+
+## 📄 Configuration Files
+
+This project uses a **template-based configuration** pattern for security:
+
+- **`infra/main.example.bicepparam`** - Template with placeholder values (committed to Git)
+- **`infra/main.bicepparam`** - Your actual values (gitignored, never committed)
+
+**Why this approach?**
+- ✅ Prevents accidental commit of sensitive values (emails, object IDs)
+- ✅ Provides clear template for all required parameters
+- ✅ Safe to share repository without exposing your Azure environment details
+
+**First-time setup:** Copy the example file and customize with your values:
+```powershell
+Copy-Item infra/main.example.bicepparam infra/main.bicepparam
+# Then edit main.bicepparam with your adminObjectId and alertEmailAddress
+```
 
 ### Documentation
 

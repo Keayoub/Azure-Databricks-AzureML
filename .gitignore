@@ -167,7 +167,7 @@ audit-logs/
 !PROJECT-STRUCTURE.md
 !azure.yaml
 !infra/main.bicep
-!infra/main.bicepparam
+!infra/main.example.bicepparam
 !infra/modules/
 !.azdo/pipelines/azure-dev.yml
 infra/main.json
@@ -175,5 +175,6 @@ infra/main.json
 infra/main.local.bicepparam
 .github/agents/
 
+# Bicep parameter files with actual values (use .example templates)
 main.bicepparam
 main.local.bicepparam
