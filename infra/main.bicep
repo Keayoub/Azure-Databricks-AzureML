@@ -403,28 +403,6 @@ module databricks 'components/databricks/databricks.bicep' = {
   }
 }
 
-module databricksDiagnostics 'components/monitoring/diagnostic-settings.bicep' = {
-  scope: databricksResourceGroup
-  name: 'databricks-diagnostics'
-  params: {
-    databricksWorkspaceId: databricks.outputs.workspaceId
-    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
-  }
-}
-
-module databricksAlerts 'components/monitoring/alerts.bicep' = if (alertEmailAddress != '') {
-  scope: sharedResourceGroup
-  name: 'databricks-alerts'
-  params: {
-    location: location
-    projectName: projectName
-    environmentName: environmentName
-    tags: tags
-    alertEmailAddress: alertEmailAddress
-    databricksWorkspaceId: databricks.outputs.workspaceId
-  }
-}
-
 // ========== AI PLATFORM RESOURCE GROUP ==========
 
 // Azure ML Private DNS Zone

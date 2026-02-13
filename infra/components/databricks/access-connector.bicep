@@ -38,12 +38,12 @@ resource accessConnector 'Microsoft.Databricks/accessConnectors@2023-05-01' = {
 //   --assignee-principal-type ServicePrincipal
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = if (storageAccountId != '') {
-  id: storageAccountId
+  name: split(storageAccountId, '/')[8]
 }
 
 resource storageBlobRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (storageAccountId != '') {
+  name: guid(storageAccountId, accessConnector.id, 'StorageBlobDataContributor')
   scope: storageAccount
-  name: guid(storageAccount.id, accessConnector.id, 'StorageBlobDataContributor')
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalId: accessConnector.identity.principalId

@@ -35,7 +35,9 @@ pwsh infra/scripts/validate.ps1
 # 2. Get your object ID for Key Vault access
 az ad signed-in-user show --query id -o tsv
 
-# 3. Edit infra/main.bicepparam and set adminObjectId
+# 3. Edit infra/main.bicepparam and set:
+#    - adminObjectId (from step 2)
+#    - alertEmailAddress (for monitoring notifications)
 
 # 4. Set your Databricks Account ID (one-time setup)
 # Get it from: https://accounts.azuredatabricks.net
@@ -55,6 +57,7 @@ azd deploy
 - 🗺️ **[PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)** - Complete documentation map and navigation guide
 - ⚡ **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
 - 📋 **[DEPLOYMENT-PROCESS.md](docs/DEPLOYMENT-PROCESS.md)** - Complete deployment workflow and troubleshooting
+- ✅ **[DEPLOYMENT-VALIDATION.md](docs/DEPLOYMENT-VALIDATION.md)** - Test and validate deployed infrastructure
 
 **Terraform Guides:**
 
