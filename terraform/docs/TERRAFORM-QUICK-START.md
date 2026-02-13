@@ -20,6 +20,9 @@ azd provision
 - ADLS Gen2, Key Vault, Log Analytics
 - Network Security Groups & RBAC assignments
 
+Key Vault architecture options and Databricks secret scope guidance:
+[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+
 ### Phase 2: Terraform (Unity Catalog)
 - UC Metastore with ADLS backend
 - Access Connector (managed identity)

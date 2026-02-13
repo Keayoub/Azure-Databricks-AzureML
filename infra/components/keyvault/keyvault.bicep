@@ -1,8 +1,12 @@
-// Azure Key Vault Module with Security Features
+// Azure Key Vault Module with Security Features (Platform Vault - RBAC)
 // This Key Vault is used for:
 // - Storing secrets for Azure ML
-// - Databricks secret management
 // - AI Foundry credentials
+// - Platform/infrastructure secrets
+// - Uses RBAC for access control (NOT for Databricks secret scopes)
+// 
+// Note: Databricks secret scopes require a separate vault with Access Policies
+// See: infra/components/keyvault/keyvault-databricks.bicep
 
 param location string
 param projectName string

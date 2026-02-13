@@ -380,10 +380,11 @@ resource "databricks_catalog" "this" {
 ## 🚨 Common Pitfalls to Avoid
 
 1. ❌ **Never store secrets in code** - Use Azure Key Vault references
-2. ❌ **Don't use `-auto-approve` locally** - Always review plans
-3. ❌ **Don't modify state files manually** - Use `terraform state` commands
-4. ❌ **Don't share service principal credentials** - Use OIDC/managed identity
-5. ❌ **Don't ignore plan warnings** - They indicate potential issues
-6. ❌ **Don't run concurrent applies** - State locking prevents this
-7. ❌ **Don't delete state files** - They're your source of truth
-8. ❌ **Don't skip testing** - Use `terraform plan` before every apply
+2. ✅ **Review Key Vault patterns** - See [DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+3. ❌ **Don't use `-auto-approve` locally** - Always review plans
+4. ❌ **Don't modify state files manually** - Use `terraform state` commands
+5. ❌ **Don't share service principal credentials** - Use OIDC/managed identity
+6. ❌ **Don't ignore plan warnings** - They indicate potential issues
+7. ❌ **Don't run concurrent applies** - State locking prevents this
+8. ❌ **Don't delete state files** - They're your source of truth
+9. ❌ **Don't skip testing** - Use `terraform plan` before every apply

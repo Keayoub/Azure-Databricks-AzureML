@@ -30,6 +30,9 @@ The deployment is split into two phases:
 - Key Vault, Container Registry, monitoring resources
 - Private endpoints for all data services
 
+For Key Vault patterns and Databricks secret scope guidance, see
+[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md).
+
 ### How to Run
 
 ```powershell

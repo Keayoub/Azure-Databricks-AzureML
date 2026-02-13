@@ -18,6 +18,7 @@
 │   ├── ENHANCEMENTS-SUMMARY.md  ← (NEW) What was improved
 │   ├── TERRAFORM-AZD-INTEGRATION.md
 │   ├── SECURITY-AUDIT.md
+│   ├── DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md  ← Key Vault options and guidance
 │   └── design/                  ← Architecture diagrams
 │
 ├── infra/                        ← Azure Infrastructure (Bicep)
@@ -167,6 +168,7 @@
 | Document | Length | Purpose |
 |----------|--------|---------|
 | [SECURITY-AUDIT.md](SECURITY-AUDIT.md) | 15 min | Security details |
+| [DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md) | 15 min | Key Vault options and guidance |
 | [TERRAFORM-AZD-INTEGRATION.md](TERRAFORM-AZD-INTEGRATION.md) | 10 min | Integration guide |
 | [design/Azure-Architecture.drawio](design/Azure-Architecture.drawio) | 5 min | Visual diagrams |
 

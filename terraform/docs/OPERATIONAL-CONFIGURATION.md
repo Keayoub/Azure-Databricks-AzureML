@@ -116,6 +116,9 @@ enable_spot_instances       = true  # Dev only!
 
 Secure storage for credentials, API keys, and connection strings.
 
+Key Vault architecture options and Databricks secret scope guidance:
+[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+
 **Scope Types:**
 - **Databricks-Backed** - Encrypted storage in Databricks
 - **Azure Key Vault-Backed** - Enterprise secret management

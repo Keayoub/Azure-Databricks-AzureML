@@ -152,6 +152,7 @@ terraform/
 
 - **[Project README](../README.md)** - Overview of entire project
 - **[DEPLOYMENT-PROCESS.md](../docs/DEPLOYMENT-PROCESS.md)** - Complete two-phase deployment guide
+- **[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)** - Key Vault options and guidance
 - **[Azure Architecture](../docs/design/Azure-Architecture.drawio)** - Visual architecture diagrams
 - **[SECURITY-AUDIT.md](../docs/SECURITY-AUDIT.md)** - Security and compliance details
 

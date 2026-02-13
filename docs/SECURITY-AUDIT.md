@@ -119,6 +119,9 @@ AKS/AML/Databricks → Private Endpoint → ACR → Image Pull
 
 ### 4. Key Vault (keyvault.bicep)
 
+Key Vault architecture options and Databricks secret scope guidance:
+[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+
 **Zero Trust Configuration:**
 ```bicep
 ✅ Public Network Access: Disabled

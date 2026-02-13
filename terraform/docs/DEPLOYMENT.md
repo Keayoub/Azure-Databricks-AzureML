@@ -21,6 +21,9 @@ Terraform Deployment (New)
 ├── Schemas: raw, processed, reports, metrics
 ├── Volumes: External data containers
 └── Access Control: RBAC and Grants via Terraform
+
+Key Vault architecture options and Databricks secret scope guidance:
+[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
 ```
 
 ## Prerequisites Checklist

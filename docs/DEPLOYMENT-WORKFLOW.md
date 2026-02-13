@@ -37,6 +37,9 @@ azd provision                     azd deploy
    - Key Vault, Azure ML, AI Foundry
    - Private endpoints
 
+   Key Vault patterns and Databricks secret scope guidance:
+   [DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+
 2. **Terraform Metastore** (via `postprovision` hook):
    - Checks if metastore exists in region
    - Creates metastore if doesn't exist (or references existing)

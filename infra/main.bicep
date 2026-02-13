@@ -191,15 +191,31 @@ module storage 'components/storage/storage.bicep' = {
   }
 }
 
-// Key Vault
+// Platform Key Vault (RBAC - for Azure ML, AI Foundry, platform services)
 module keyVault 'components/keyvault/keyvault.bicep' = {
   scope: sharedResourceGroup
-  name: 'keyvault-deployment'
+  name: 'keyvault-platform-deployment'
   params: {
     location: location
     projectName: projectName
     environmentName: environmentName
     adminObjectId: adminObjectId
+    vnetId: networking.outputs.vnetId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    tags: tags
+  }
+}
+
+// Databricks Key Vault (Access Policies - for Databricks secret scopes)
+// Dedicated vault for Databricks-accessible secrets only
+// Uses Access Policies (required by Microsoft for Databricks secret scope integration)
+module databricksKeyVault 'components/keyvault/keyvault-databricks.bicep' = {
+  scope: sharedResourceGroup
+  name: 'keyvault-databricks-deployment'
+  params: {
+    location: location
+    projectName: projectName
+    environmentName: environmentName
     vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
@@ -541,8 +557,20 @@ output networkingOutputs object = networking.outputs
 @description('Storage outputs from shared RG')
 output storageOutputs object = storage.outputs
 
-@description('Key Vault outputs from shared RG')
+@description('Platform Key Vault outputs from shared RG (RBAC - for Azure ML, AI Foundry)')
 output keyVaultOutputs object = keyVault.outputs
+
+@description('Databricks Key Vault ID (Access Policies - for secret scopes)')
+output databricksKeyVaultId string = databricksKeyVault.outputs.keyVaultId
+
+@description('Databricks Key Vault name')
+output databricksKeyVaultName string = databricksKeyVault.outputs.keyVaultName
+
+@description('Databricks Key Vault URI for secret scope configuration')
+output databricksKeyVaultUri string = databricksKeyVault.outputs.keyVaultUri
+
+@description('Databricks Key Vault full resource ID for Terraform')
+output databricksKeyVaultResourceId string = databricksKeyVault.outputs.resourceId
 
 @description('Container Registry outputs from shared RG')
 output containerRegistryOutputs object = containerRegistry.outputs

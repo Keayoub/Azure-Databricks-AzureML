@@ -97,6 +97,7 @@ Copy-Item infra/main.example.bicepparam infra/main.bicepparam
 
 - 📊 **[ENHANCEMENTS-SUMMARY.md](docs/ENHANCEMENTS-SUMMARY.md)** - What was improved in this project
 - 🔒 [SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md) - Security and compliance details
+- 🔑 **[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)** - Key Vault options, pros/cons, and recommended pattern
 
 > **Note:** Your Databricks Account ID is available at <https://accounts.azuredatabricks.net> in the URL or Account Settings. This is a one-time configuration - Azure Developer CLI stores it for all future deployments.
 

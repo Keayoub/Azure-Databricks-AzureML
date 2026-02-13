@@ -10,6 +10,9 @@ This project uses a two-stage deployment approach:
    - Storage accounts, Key Vault, monitoring resources
    - Cross-RG RBAC assignments
 
+  Key Vault patterns and Databricks secret scope guidance:
+  [DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)
+
 2. **Terraform Phase** (automatic post-Bicep): Deploys Unity Catalog layer
    - UC metastore infrastructure
    - Catalogs, schemas, and volumes

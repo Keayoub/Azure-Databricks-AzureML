@@ -86,6 +86,7 @@ terraform apply -var-file=terraform.tfvars
 - **[DEPLOYMENT-WORKFLOW.md](../docs/DEPLOYMENT-WORKFLOW.md)**: Detailed two-phase workflow
 - **[TERRAFORM-QUICK-START.md](docs/TERRAFORM-QUICK-START.md)**: Getting started guide
 - **[TERRAFORM-QUICK-REFERENCE.md](docs/TERRAFORM-QUICK-REFERENCE.md)**: Command reference
+- **[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](../docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)**: Key Vault options and guidance
 
 4. **Information from Bicep Deployment:**
    - Shared resource group name: `rg-dev-dbxaml-shared`
