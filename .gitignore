@@ -174,3 +174,6 @@ infra/main.json
 infra/main.json
 infra/main.local.bicepparam
 .github/agents/
+
+main.bicepparam
+main.local.bicepparam
