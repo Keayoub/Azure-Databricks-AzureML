@@ -64,7 +64,7 @@ if (Test-Path $bicep_params) {
 
 # Check 6: Azure subscription
 Write-Host "Checking Azure subscription..." -ForegroundColor Cyan
-$sub_id = az account show --query "id" -o tsv 2>/dev/null
+$sub_id = az account show --query "id" -o tsv 2>$null
 if ($sub_id) {
   Write-Host "  ✓ Active subscription: $sub_id" -ForegroundColor Green
 } else {

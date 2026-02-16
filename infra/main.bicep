@@ -53,6 +53,12 @@ param deployBastion bool = false
 @description('Deploy Jumpbox VM for management tasks')
 param deployJumpbox bool = false
 
+@description('Enable NSG flow logs (deprecated in 2025)')
+param enableNsgFlowLogs bool = false
+
+@description('Enable Azure Policy assignments (optional)')
+param enablePolicyAssignments bool = false
+
 @description('Jumpbox admin username')
 param jumpboxAdminUsername string = 'azureadmin'
 
@@ -200,8 +206,8 @@ module keyVault 'components/keyvault/keyvault.bicep' = {
     projectName: projectName
     environmentName: environmentName
     adminObjectId: adminObjectId
-    vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    privateDnsZoneId: keyVaultPrivateDnsZone.id
     tags: tags
   }
 }
@@ -216,8 +222,8 @@ module databricksKeyVault 'components/keyvault/keyvault-databricks.bicep' = {
     location: location
     projectName: projectName
     environmentName: environmentName
-    vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
+    privateDnsZoneId: keyVaultPrivateDnsZone.id
     tags: tags
   }
 }
@@ -233,6 +239,27 @@ module containerRegistry 'components/acr/acr.bicep' = {
     vnetId: networking.outputs.vnetId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
+  }
+}
+
+// Shared Private DNS Zone for Key Vault (avoid duplicate zone creation)
+resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+  scope: sharedResourceGroup
+  name: 'privatelink.vaultcore.azure.net'
+  location: 'global'
+  tags: tags
+}
+
+resource keyVaultPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  scope: sharedResourceGroup
+  parent: keyVaultPrivateDnsZone
+  name: 'kv-dns-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: networking.outputs.vnetId
+    }
   }
 }
 
@@ -342,7 +369,7 @@ module securityRbac 'components/security/security-rbac.bicep' = {
 }
 
 // NSG Flow Logs (Network Monitoring)
-module nsgFlowLogs 'components/networking/nsg-flow-logs.bicep' = {
+module nsgFlowLogs 'components/networking/nsg-flow-logs.bicep' = if (enableNsgFlowLogs) {
   scope: sharedResourceGroup
   name: 'nsg-flowlogs-deployment'
   params: {
@@ -359,7 +386,7 @@ module nsgFlowLogs 'components/networking/nsg-flow-logs.bicep' = {
 }
 
 // Azure Policy Assignments (Security & Governance)
-module policyAssignments 'components/security/policy-assignments.bicep' = {
+module policyAssignments 'components/security/policy-assignments.bicep' = if (enablePolicyAssignments) {
   scope: sharedResourceGroup
   name: 'policy-assignments-deployment'
   params: {

@@ -60,6 +60,9 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
     applicationInsights: applicationInsights.id
     containerRegistry: containerRegistryId
     publicNetworkAccess: 'Disabled'
+    managedNetwork: {
+      isolationMode: 'Disabled'
+    }
     imageBuildCompute: 'cpu-cluster' // Optional
     description: 'Secure Azure ML workspace with network integration'
     discoveryUrl: null

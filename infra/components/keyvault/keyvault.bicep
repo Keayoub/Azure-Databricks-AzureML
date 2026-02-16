@@ -12,8 +12,8 @@ param location string
 param projectName string
 param environmentName string
 param adminObjectId string = ''
-param vnetId string
 param privateEndpointSubnetId string
+param privateDnsZoneId string
 param tags object
 
 var keyVaultName = 'kv-${environmentName}-${projectName}-${uniqueString(resourceGroup().id)}'
@@ -56,22 +56,8 @@ resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@20
 }
 
 // ========== Private DNS Zone ==========
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink.vaultcore.azure.net'
-  location: 'global'
-  tags: tags
-}
-
-resource dnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  parent: privateDnsZone
-  name: 'kv-dns-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnetId
-    }
-  }
+resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
+  id: privateDnsZoneId
 }
 
 // ========== Private Endpoint ==========
