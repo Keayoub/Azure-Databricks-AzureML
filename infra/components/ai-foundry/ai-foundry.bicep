@@ -11,7 +11,9 @@ param storageAccountId string
 param keyVaultId string
 param containerRegistryId string
 param privateEndpointSubnetId string
-param privateDnsZoneId string
+param apiPrivateDnsZoneId string
+param logAnalyticsWorkspaceId string = ''
+param enableDiagnostics bool = true
 param tags object
 
 var hubName = 'aihub-${environmentName}-${projectName}'
@@ -48,7 +50,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
 // to allow cross-resource group assignments
 
 // ========== Private Endpoint ==========
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-05-01' = {
   name: privateEndpointName
   location: location
   tags: tags
@@ -70,7 +72,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   }
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
+resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
   parent: privateEndpoint
   name: 'aihub-dns-zone-group'
   properties: {
@@ -78,7 +80,172 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
       {
         name: 'config'
         properties: {
-          privateDnsZoneId: privateDnsZoneId
+          privateDnsZoneId: apiPrivateDnsZoneId
+        }
+      }
+    ]
+  }
+}
+
+// ========== Diagnostic Settings ==========
+resource hubDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics && !empty(logAnalyticsWorkspaceId)) {
+  scope: aiHub
+  name: 'aihub-diagnostics'
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+    logs: [
+      {
+        category: 'AmlComputeClusterEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AmlComputeClusterNodeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AmlComputeJobEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'AmlRunStatusChangedEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'ModelsChangeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'ModelsReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'ModelsActionEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'DeploymentReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'EnvironmentChangeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'EnvironmentReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'DataStoreChangeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'DataStoreReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'DataSetChangeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'DataSetReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'PipelineChangeEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'PipelineReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'RunEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+      {
+        category: 'RunReadEvent'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
         }
       }
     ]

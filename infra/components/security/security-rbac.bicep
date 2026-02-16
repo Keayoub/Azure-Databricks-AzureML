@@ -5,7 +5,6 @@
 param location string
 param projectName string
 param environmentName string
-param adminObjectId string // Reserved for future admin role assignments
 param tags object
 
 // Role IDs (these are built-in Azure roles)

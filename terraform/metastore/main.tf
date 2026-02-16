@@ -99,7 +99,6 @@ resource "databricks_metastore_data_access" "uc_access" {
   provider     = databricks.accounts
   metastore_id  = local.validate_metastore_id
   name          = "uc-access-connector-${var.project_name}"
-  force_destroy = var.environment_name != "prod"
 
   azure_managed_identity {
     access_connector_id = data.azurerm_databricks_access_connector.uc_connector.id
@@ -116,6 +115,10 @@ resource "databricks_metastore_data_access" "uc_access" {
       condition     = local.validate_metastore_id != null
       error_message = "Metastore ID is required but not found. Ensure metastore creation succeeded."
     }
+    
+    # If resource already exists, import it instead of failing
+    # Never destroy root credential
+    prevent_destroy = true
   }
 }
 
@@ -141,17 +144,18 @@ resource "databricks_metastore_assignment" "workspace" {
 }
 
 # Set the default namespace (replacement for default_catalog_name)
-resource "databricks_default_namespace_setting" "workspace" {
-  namespace {
-    value = "main"
-  }
+# NOTE: Commented out for private workspaces - set this manually via Databricks UI
+# resource "databricks_default_namespace_setting" "workspace" {
+#   namespace {
+#     value = "main"
+#   }
   
-  lifecycle {
-    # Ignore manual changes to namespace
-    ignore_changes = [namespace]
-  }
+#   lifecycle {
+#     # Ignore manual changes to namespace
+#     ignore_changes = [namespace]
+#   }
 
-  depends_on = [
-    databricks_metastore_assignment.workspace
-  ]
-}
+#   depends_on = [
+#     databricks_metastore_assignment.workspace
+#   ]
+# }

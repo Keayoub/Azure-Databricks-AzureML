@@ -301,8 +301,6 @@ module aks 'components/aks/aks.bicep' = if (deployAKS) {
     environmentName: environmentName
     aksSubnetId: networking.outputs.aksSubnetId
     nodeCount: aksNodeCount
-    vnetId: networking.outputs.vnetId
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
   }
 }
@@ -346,7 +344,6 @@ module securityRbac 'components/security/security-rbac.bicep' = {
     location: location
     projectName: projectName
     environmentName: environmentName
-    adminObjectId: adminObjectId
     tags: tags
   }
 }
@@ -454,7 +451,9 @@ module azureML 'components/azureml/azureml.bicep' = if (deployAzureML) {
     containerRegistryId: containerRegistry.outputs.acrId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     computeSubnetId: networking.outputs.azureMLComputeSubnetId
-    privateDnsZoneId: azuremlDns!.outputs.privateDnsZoneId
+    apiPrivateDnsZoneId: azuremlDns!.outputs.apiPrivateDnsZoneId
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    enableDiagnostics: true
     tags: tags
   }
 }
@@ -471,7 +470,9 @@ module aiFoundry 'components/ai-foundry/ai-foundry.bicep' = if (deployAIFoundry)
     keyVaultId: keyVault.outputs.keyVaultId
     containerRegistryId: containerRegistry.outputs.acrId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    privateDnsZoneId: azuremlDns!.outputs.privateDnsZoneId
+    apiPrivateDnsZoneId: azuremlDns!.outputs.apiPrivateDnsZoneId
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    enableDiagnostics: true
     tags: tags
   }
 }

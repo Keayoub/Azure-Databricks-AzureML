@@ -7,8 +7,6 @@ param projectName string
 param environmentName string
 param aksSubnetId string
 param nodeCount int
-param vnetId string
-param privateEndpointSubnetId string
 param tags object
 
 var clusterName = 'aks-${projectName}-${environmentName}'
