@@ -508,9 +508,26 @@ module cosmosDb 'components/cosmos-db/cosmos-db.bicep' = if (deployCosmosDB) {
 }
 
 // ========== Cross-Resource Group RBAC Assignments ==========
-// These are handled at subscription scope to allow access across resource groups
+// 
+// These assign roles at SHARED RESOURCE GROUP scope (where both storage accounts live).
+// This means roles apply to both:
+// 1. Unity Catalog storage - accessed via Access Connector, not direct RBAC
+// 2. Azure ML storage - accessed via managed identities
+//
+// DESIGN NOTE:
+// - RG-scoped roles are simpler than resource-scoped roles
+// - UC storage access is controlled by Access Connector, not these RBAC assignments
+// - Azure ML benefits from having Contributor role (can write models/artifacts)
+// - AI Foundry only needs Reader (read-only access to workspace storage)
+//
+// For detailed RBAC configuration, see: docs/STORAGE-AND-RBAC-CONFIGURATION.md
+//
 
-// Azure ML Workspace - Storage Blob Data Contributor (cross-RG via module)
+// Azure ML Workspace - Storage Blob Data Contributor
+// Scope: Shared RG (both storage accounts, but primarily for Azure ML storage)
+// Purpose: Write training artifacts, models, datasets to azureml container
+// REQUIRED: When allowSharedKeyAccess=false, workspace MUST have this role
+// Identity: azure-ml-workspace managed identity
 module amlStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aml-storage-blob-role'
@@ -521,7 +538,24 @@ module amlStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' =
   }
 }
 
-// Azure ML Workspace - Key Vault Administrator (cross-RG via module)
+// Azure ML Workspace - Storage File Data Privileged Contributor
+// Scope: Shared RG (Azure ML storage account)
+// Purpose: Access file shares when allowSharedKeyAccess=false
+// REQUIRED: For datastore file share access with identity-based auth
+// Identity: azure-ml-workspace managed identity
+module amlStorageFileRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aml-storage-file-role'
+  params: {
+    principalId: azureML!.outputs.workspacePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure ML Workspace - Key Vault Administrator
+// Scope: Shared RG
+// Purpose: Access secrets, certificates from platform Key Vault
 module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aml-keyvault-role'
@@ -532,7 +566,11 @@ module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if
   }
 }
 
-// AI Foundry Hub - Storage Blob Data Reader (cross-RG via module)
+// AI Foundry Hub - Storage Blob Data Reader (Read-Only)
+// Scope: Shared RG (both storage accounts, but primarily for Azure ML storage)
+// Purpose: Read-only access to workspace storage (models, artifacts)
+// Note: Reader role is SUFFICIENT for AI Foundry (shares workspace with Azure ML)
+// Identity: ai-foundry-hub managed identity (f55da7e0-4eea-4f16-ab3d-e7b3401cc804)
 module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aihub-storage-blob-role'
@@ -543,7 +581,9 @@ module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bi
   }
 }
 
-// AI Foundry Hub - Key Vault Administrator (cross-RG via module)
+// AI Foundry Hub - Key Vault Administrator
+// Scope: Shared RG
+// Purpose: Access secrets, certificates from platform Key Vault
 module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aihub-keyvault-role'
@@ -551,6 +591,37 @@ module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep
     principalId: aiFoundry!.outputs.hubPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')
     principalType: 'ServicePrincipal'
+  }
+}
+
+// ========== Admin User Storage Access ==========
+// IMPORTANT: When allowSharedKeyAccess=false, users need RBAC roles to access storage via Studio
+// These roles enable the admin user to access datastores in Azure ML Studio
+// See: docs/FIX-DATASTORE-ACCOUNT-KEY-ERROR.md
+
+// Admin User - Storage Blob Data Contributor
+// Scope: Shared RG (Azure ML storage account)
+// Purpose: Access Azure ML datastores in Studio when account key is disabled
+module adminStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'admin-storage-blob-role'
+  params: {
+    principalId: adminObjectId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+    principalType: 'User'
+  }
+}
+
+// Admin User - Storage File Data Privileged Contributor
+// Scope: Shared RG (Azure ML storage account)
+// Purpose: Access file shares in Azure ML storage when account key is disabled
+module adminStorageFileRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'admin-storage-file-role'
+  params: {
+    principalId: adminObjectId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')
+    principalType: 'User'
   }
 }
 

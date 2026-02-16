@@ -283,6 +283,11 @@ Write-Host "  2. Verify in Azure: rg-$ENV_NAME-$PROJECT_NAME-ai-platform → Rol
 Write-Host "  3. Run 'azd deploy' to deploy UC catalogs and schemas" -ForegroundColor Cyan
 Write-Host "  4. Review DEPLOYMENT-PROCESS.md for verification steps" -ForegroundColor Cyan
 Write-Host ""
+Write-Host "⚠ Manual Step Required: Migrate Azure ML datastore to identity-based auth" -ForegroundColor Yellow
+Write-Host "  Go to: https://ml.azure.com → Data → Datastores → workspaceblobstore" -ForegroundColor Yellow
+Write-Host "  Click 'Update credentials' → Change to 'Identity-based' → Update" -ForegroundColor Yellow
+Write-Host "  See: docs/FIX-DATASTORE-ACCOUNT-KEY-ERROR.md for detailed steps" -ForegroundColor Yellow
+Write-Host ""
 
 Pop-Location
 

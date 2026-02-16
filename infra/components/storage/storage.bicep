@@ -1,8 +1,25 @@
-// Storage Account Module with Security Features
-// This storage account is used for:
-// - Unity Catalog metastore storage
-// - Azure ML workspace storage
-// - AI Foundry hub storage
+// ========== Storage Account Module with Security Features ==========
+// 
+// IMPORTANT: This module deploys TWO SEPARATE storage accounts for DIFFERENT purposes.
+// Do NOT confuse them - they have different SKUs, configurations, and use cases.
+//
+// 1. UNITY CATALOG STORAGE (storageAccount)
+//    - SKU: Standard_RAGRS (geo-redundant for HA)
+//    - HNS: Enabled (ADLS Gen2 - required for Unity Catalog)
+//    - Container: unity-catalog
+//    - Private Endpoints: blob, dfs (ADLS Gen2), file
+//    - Primary Consumer: Databricks via Access Connector
+//    - Access: Managed identity (no shared keys)
+//
+// 2. AZURE ML STORAGE (mlStorageAccount)
+//    - SKU: Standard_LRS (local redundancy, cost-optimized)
+//    - HNS: Disabled (standard blob storage)
+//    - Container: azureml
+//    - Private Endpoints: blob, file (no DFS - not needed)
+//    - Primary Consumers: Azure ML workspace, AI Foundry hub
+//    - Access: Managed identity (no shared keys)
+//
+// See docs/STORAGE-AND-RBAC-CONFIGURATION.md for detailed RBAC and access flow.
 
 param location string
 param projectName string
@@ -20,13 +37,19 @@ var mlStorageAccountName = 'stml${replace(projectName, '-', '')}${environmentNam
 var mlBlobPrivateEndpointName = 'pe-${mlStorageAccountName}-blob'
 var mlFilePrivateEndpointName = 'pe-${mlStorageAccountName}-file'
 
-// ========== Storage Account ==========
+// ========== Storage Account #1: UNITY CATALOG (ADLS Gen2) ==========
+// Purpose: Databricks Unity Catalog metastore and data lake
+// SKU: Standard_RAGRS (geo-redundant for HA in production)
+// HNS: Enabled (ADLS Gen2 hierarchical namespace)
+// Accessed via: Access Connector + Databricks managed identity
+// Private Endpoints: blob, dfs (ADLS Gen2), file
+// Role Assignments: Handled by Access Connector (no direct RBAC to AML/AI Foundry)
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: take(storageAccountName, 24) // Storage account names max 24 chars
   location: location
   tags: tags
   sku: {
-    name: 'Standard_RAGRS' // Read-access geo-redundant storage
+    name: 'Standard_RAGRS' // Read-access geo-redundant storage for HA
   }
   kind: 'StorageV2'
   properties: {
@@ -34,10 +57,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false // Disable public blob access
-    allowSharedKeyAccess: true // Allow shared key access for deployment scripts and managed identity fallback
+    allowSharedKeyAccess: false // CRITICAL: Disable shared key - Access Connector uses managed identity
     networkAcls: {
       defaultAction: 'Deny' // Deny all traffic by default
-      bypass: 'AzureServices, Logging'
+      bypass: 'AzureServices, Logging' // Allow Azure platform services
       virtualNetworkRules: []
       ipRules: []
     }
@@ -63,20 +86,28 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
         }
       }
     }
-    isHnsEnabled: true // Enable hierarchical namespace for ADLS Gen2 (required for Unity Catalog)
+    isHnsEnabled: true // *** CRITICAL: Enable hierarchical namespace for ADLS Gen2 (required for Unity Catalog) ***
     isNfsV3Enabled: false
     isSftpEnabled: false
     publicNetworkAccess: 'Disabled' // Disable public access
   }
 }
 
-// Storage account for Azure ML / AI Foundry (non-HNS)
+// ========== Storage Account #2: AZURE ML (Standard Blob) ==========
+// Purpose: Azure ML workspace storage, experiments, models, artifacts, AI Foundry hub storage
+// SKU: Standard_LRS (local redundancy, cost-optimized - single region only)
+// HNS: Disabled (standard blob storage, NOT ADLS Gen2)
+// Accessed via: Azure ML identity + AI Foundry identity
+// Private Endpoints: blob, file (NO DFS endpoint - not needed for standard blob)
+// Role Assignments: 
+//   - Azure ML: Storage Blob Data Contributor (write models, artifacts)
+//   - AI Foundry: Storage Blob Data Reader (read-only, shared workspace)
 resource mlStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: take(mlStorageAccountName, 24)
   location: location
   tags: tags
   sku: {
-    name: 'Standard_LRS'
+    name: 'Standard_LRS' // Local redundancy only, cost-optimized
   }
   kind: 'StorageV2'
   properties: {
@@ -84,12 +115,13 @@ resource mlStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     allowBlobPublicAccess: false
-    allowSharedKeyAccess: true
+    allowSharedKeyAccess: false // CRITICAL: Disable shared key - forces identity-based authentication
     networkAcls: {
-      defaultAction: 'Deny'
-      bypass: 'AzureServices'
+      defaultAction: 'Deny' // Deny by default, access via private endpoint
+      bypass: 'AzureServices, Logging, Metrics' // Allow Azure services, logging, and metrics
       virtualNetworkRules: []
       ipRules: []
+      resourceAccessRules: [] // Resource access rules for workspace-specific access
     }
     encryption: {
       requireInfrastructureEncryption: true
@@ -113,10 +145,10 @@ resource mlStorageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
         }
       }
     }
-    isHnsEnabled: false
+    isHnsEnabled: false // *** Standard blob storage (not ADLS Gen2) - DFS not needed ***
     isNfsV3Enabled: false
     isSftpEnabled: false
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: 'Disabled' // Disabled - access via private endpoint only (secure by default)
   }
 }
 
