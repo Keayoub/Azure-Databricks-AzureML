@@ -64,10 +64,10 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2025-10-01-prev
     applicationInsights: applicationInsights.id
     containerRegistry: containerRegistryId
     publicNetworkAccess: 'Disabled'
+    imageBuildCompute: 'cpu-cluster'
     managedNetwork: {
       isolationMode: 'Disabled'
     }
-    imageBuildCompute: 'cpu-cluster' // Optional
     description: 'Secure Azure ML workspace with network integration'
     discoveryUrl: null
   }
@@ -119,6 +119,7 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
   parent: workspace
   name: 'cpu-cluster'
   location: location
+  tags: tags
   identity: {
     type: 'SystemAssigned'
   }
@@ -140,6 +141,39 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
       }
       remoteLoginPortPublicAccess: 'Disabled'
       isolatedNetwork: false
+    }
+  }
+}
+
+// ========== Compute Instance ==========
+resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@2025-10-01-preview' = {
+  parent: workspace
+  name: 'aml-compute-instance'
+  location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    computeType: 'ComputeInstance'
+    computeLocation: location
+    description: 'Azure ML compute instance for development'
+    properties: {
+      vmSize: 'Standard_DS3_v2'
+      subnet: {
+        id: computeSubnetId
+      }
+      disableNodePublicIp: true
+      applicationSharingPolicy: 'Personal'
+      releaseQuota: false
+      enableNodePublicIp: false
+      sshSettings: {
+        status: 'Disabled'
+      }
+      setupScripts: {
+        startupScript: null
+      }
+      customImage: null
     }
   }
 }
@@ -188,216 +222,6 @@ resource workspaceDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-
   name: 'aml-diagnostics'
   properties: {
     workspaceId: logAnalyticsWorkspaceId
-    logs: [
-      {
-        category: 'AmlComputeClusterEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'AmlComputeClusterNodeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'AmlComputeJobEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'AmlComputeCpuGpuUtilization'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'AmlRunStatusChangedEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'ModelsChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'ModelsReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'ModelsActionEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DeploymentReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DeploymentEventACI'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DeploymentEventAKS'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'InferencingOperationAKS'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'InferencingOperationACI'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'EnvironmentChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'EnvironmentReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataLabelChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataLabelReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'ComputeInstanceEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataStoreChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataStoreReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataSetChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'DataSetReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'PipelineChangeEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'PipelineReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'RunEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'RunReadEvent'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-    ]
     metrics: [
       {
         category: 'AllMetrics'
@@ -416,6 +240,10 @@ output workspaceName string = workspace.name
 output workspaceId string = workspace.id
 output workspacePrincipalId string = workspace.identity.principalId
 output applicationInsightsId string = applicationInsights.id
+output computeClusterName string = computeCluster.name
+output computeClusterId string = computeCluster.id
+output computeInstanceName string = computeInstance.name
+output computeInstanceId string = computeInstance.id
 output blobDatastoreName string = dataStore.name
 output blobDatastoreId string = dataStore.id
 output adlsDatastoreName string = adlsDataStore.name

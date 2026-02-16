@@ -510,13 +510,13 @@ module cosmosDb 'components/cosmos-db/cosmos-db.bicep' = if (deployCosmosDB) {
 // ========== Cross-Resource Group RBAC Assignments ==========
 // These are handled at subscription scope to allow access across resource groups
 
-// Azure ML Workspace - Storage Blob Data Reader (cross-RG via module)
+// Azure ML Workspace - Storage Blob Data Contributor (cross-RG via module)
 module amlStorageBlobRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aml-storage-blob-role'
   params: {
     principalId: azureML!.outputs.workspacePrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
     principalType: 'ServicePrincipal'
   }
 }
