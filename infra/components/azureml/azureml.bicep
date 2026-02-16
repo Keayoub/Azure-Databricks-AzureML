@@ -25,8 +25,7 @@ var privateEndpointName = 'pe-${environmentName}-${projectName}-aml'
 var storageAccountName = split(storageAccountId, '/')[8]
 var storageAccountSubscriptionId = split(storageAccountId, '/')[2]
 var storageAccountResourceGroup = split(storageAccountId, '/')[4]
-var storageBlobEndpoint = 'https://${storageAccountName}.blob.${environment().suffixes.storage}'
-var storageDfsEndpoint = 'https://${storageAccountName}.dfs.${environment().suffixes.storage}'
+var storageEndpointSuffix = environment().suffixes.storage
 var keyVaultName = split(keyVaultId, '/')[8]
 var containerRegistryName = split(containerRegistryId, '/')[8]
 
@@ -147,14 +146,14 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
 }
 
 // ========== Datastore (Azure Blob) ==========
-resource dataStore 'Microsoft.MachineLearningServices/workspaces/datastores@2024-04-01' = {
+resource dataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2024-04-01' = {
   parent: workspace
-  name: 'ml-blob'
+  name: 'ml_blob'
   properties: {
     datastoreType: 'AzureBlob'
     accountName: storageAccountName
     containerName: storageContainerName
-    endpoint: storageBlobEndpoint
+    endpoint: storageEndpointSuffix
     protocol: 'https'
     subscriptionId: storageAccountSubscriptionId
     resourceGroup: storageAccountResourceGroup
@@ -166,14 +165,14 @@ resource dataStore 'Microsoft.MachineLearningServices/workspaces/datastores@2024
 }
 
 // ========== Datastore (ADLS Gen2) ==========
-resource adlsDataStore 'Microsoft.MachineLearningServices/workspaces/datastores@2024-04-01' = {
+resource adlsDataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2024-04-01' = {
   parent: workspace
-  name: 'ml-adls'
+  name: 'ml_adls'
   properties: {
     datastoreType: 'AzureDataLakeGen2'
     accountName: storageAccountName
     filesystem: adlsContainerName
-    endpoint: storageDfsEndpoint
+    endpoint: storageEndpointSuffix
     protocol: 'https'
     subscriptionId: storageAccountSubscriptionId
     resourceGroup: storageAccountResourceGroup
