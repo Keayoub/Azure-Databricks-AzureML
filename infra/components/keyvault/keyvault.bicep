@@ -12,12 +12,9 @@ param location string
 param projectName string
 param environmentName string
 param adminObjectId string = ''
-param privateEndpointSubnetId string
-param privateDnsZoneId string
 param tags object
 
-var keyVaultName = 'kv-${environmentName}-${projectName}-${uniqueString(resourceGroup().id)}'
-var privateEndpointName = 'pe-${keyVaultName}'
+var keyVaultName = 'kv-${environmentName}-${projectName}-${uniqueString(resourceGroup().id, projectName, 'v2')}'
 
 // ========== Key Vault ==========
 resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
@@ -52,49 +49,6 @@ resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@20
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
     principalId: adminObjectId
     principalType: 'User'
-  }
-}
-
-// ========== Private DNS Zone ==========
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  id: privateDnsZoneId
-}
-
-// ========== Private Endpoint ==========
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
-  name: privateEndpointName
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: privateEndpointName
-        properties: {
-          privateLinkServiceId: keyVault.id
-          groupIds: [
-            'vault'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
-  parent: privateEndpoint
-  name: 'vault-dns-zone-group'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: privateDnsZone.id
-        }
-      }
-    ]
   }
 }
 

@@ -26,28 +26,25 @@ var storageAccountName = split(storageAccountId, '/')[8]
 var storageAccountSubscriptionId = split(storageAccountId, '/')[2]
 var storageAccountResourceGroup = split(storageAccountId, '/')[4]
 var storageEndpointSuffix = environment().suffixes.storage
-var keyVaultName = split(keyVaultId, '/')[8]
-var containerRegistryName = split(containerRegistryId, '/')[8]
 
 // Note: We don't declare 'existing' resources here because they're in a different RG
 // Instead, we reference them by their full resource ID in RBAC assignments below
 
 // ========== Application Insights ==========
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02-preview' = {
   name: applicationInsightsName
   location: location
   tags: tags
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    RetentionInDays: 90
     publicNetworkAccessForIngestion: 'Disabled'
     publicNetworkAccessForQuery: 'Disabled'
   }
 }
 
 // ========== Azure ML Workspace ==========
-resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
+resource workspace 'Microsoft.MachineLearningServices/workspaces@2025-10-01-preview' = {
   name: workspaceName
   location: location
   tags: tags
@@ -78,7 +75,7 @@ resource workspace 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
 // to allow cross-resource group assignments
 
 // ========== Private Endpoint ==========
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
+resource privateEndpoint 'Microsoft.Network/privateEndpoints@2025-05-01' = {
   name: privateEndpointName
   location: location
   tags: tags
@@ -100,7 +97,7 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
   }
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
+resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2025-05-01' = {
   parent: privateEndpoint
   name: 'aml-dns-zone-group'
   properties: {
@@ -116,7 +113,7 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
 }
 
 // ========== Compute Cluster ==========
-resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2024-04-01' = {
+resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2025-10-01-preview' = {
   parent: workspace
   name: 'cpu-cluster'
   location: location
@@ -146,7 +143,7 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
 }
 
 // ========== Datastore (Azure Blob) ==========
-resource dataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2024-04-01' = {
+resource dataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2025-10-01-preview' = {
   parent: workspace
   name: 'ml_blob'
   properties: {
@@ -165,7 +162,7 @@ resource dataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2024
 }
 
 // ========== Datastore (ADLS Gen2) ==========
-resource adlsDataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2024-04-01' = {
+resource adlsDataStore 'Microsoft.MachineLearningServices/workspaces/dataStores@2025-10-01-preview' = {
   parent: workspace
   name: 'ml_adls'
   properties: {

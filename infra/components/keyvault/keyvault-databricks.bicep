@@ -6,12 +6,9 @@
 param location string
 param projectName string
 param environmentName string
-param privateEndpointSubnetId string
-param privateDnsZoneId string
 param tags object
 
-var keyVaultName = 'kv-${environmentName}-dbx-${projectName}-${uniqueString(resourceGroup().id)}'
-var privateEndpointName = 'pe-${keyVaultName}'
+var keyVaultName = 'kv-${environmentName}-dbx-${projectName}-${uniqueString(resourceGroup().id, projectName, 'v2')}'
 
 // Databricks Service Principal IDs by region
 // Source: https://learn.microsoft.com/azure/databricks/security/secrets/
@@ -67,50 +64,6 @@ resource databricksKeyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
             'get'
             'list'
           ]
-        }
-      }
-    ]
-  }
-}
-
-// ========== Private DNS Zone ==========
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
-  id: privateDnsZoneId
-}
-
-// ========== Private Endpoint ==========
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = {
-  name: privateEndpointName
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointSubnetId
-    }
-    privateLinkServiceConnections: [
-      {
-        name: privateEndpointName
-        properties: {
-          privateLinkServiceId: databricksKeyVault.id
-          groupIds: [
-            'vault'
-          ]
-        }
-      }
-    ]
-  }
-}
-
-// ========== Private DNS Zone Group ==========
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-01-01' = {
-  parent: privateEndpoint
-  name: 'dnsgroupname'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config1'
-        properties: {
-          privateDnsZoneId: privateDnsZone.id
         }
       }
     ]

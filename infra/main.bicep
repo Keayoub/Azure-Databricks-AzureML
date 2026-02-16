@@ -92,9 +92,6 @@ param apimPublisherName string = 'API Management Admin'
 @description('Your object ID for admin permissions')
 param adminObjectId string
 
-@description('Email address for Azure Monitor alert notifications')
-param alertEmailAddress string = ''
-
 @description('Tags for all resources')
 param tags object = {
   Environment: environmentName
@@ -206,8 +203,6 @@ module keyVault 'components/keyvault/keyvault.bicep' = {
     projectName: projectName
     environmentName: environmentName
     adminObjectId: adminObjectId
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    privateDnsZoneId: keyVaultPrivateDnsZone.id
     tags: tags
   }
 }
@@ -222,8 +217,6 @@ module databricksKeyVault 'components/keyvault/keyvault-databricks.bicep' = {
     location: location
     projectName: projectName
     environmentName: environmentName
-    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
-    privateDnsZoneId: keyVaultPrivateDnsZone.id
     tags: tags
   }
 }
@@ -243,23 +236,13 @@ module containerRegistry 'components/acr/acr.bicep' = {
 }
 
 // Shared Private DNS Zone for Key Vault (avoid duplicate zone creation)
-resource keyVaultPrivateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
+module sharedDnsZone 'components/networking/shared-dns-zone.bicep' = {
   scope: sharedResourceGroup
-  name: 'privatelink.vaultcore.azure.net'
-  location: 'global'
-  tags: tags
-}
-
-resource keyVaultPrivateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  scope: sharedResourceGroup
-  parent: keyVaultPrivateDnsZone
-  name: 'kv-dns-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: networking.outputs.vnetId
-    }
+  name: 'shared-dns-zone-deployment'
+  params: {
+    location: 'global'
+    vnetId: networking.outputs.vnetId
+    tags: tags
   }
 }
 
