@@ -218,10 +218,70 @@ Write-Host "  Metastore Name   : metastore-$PROJECT_NAME" -ForegroundColor Cyan
 Write-Host "  Region           : $WORKSPACE_REGION" -ForegroundColor Cyan
 Write-Host "  Workspace        : $DATABRICKS_WORKSPACE_ID is now assigned" -ForegroundColor Cyan
 Write-Host ""
+
+# ========== Assign Azure AI Administrator Role ==========
+Write-Host "Assigning Azure AI Administrator roles..." -ForegroundColor Cyan
+Write-Host ""
+
+$AI_PLATFORM_RG = "rg-$ENV_NAME-$PROJECT_NAME-ai-platform"
+$AML_WORKSPACE_NAME = "aml-$ENV_NAME-$PROJECT_NAME"
+$AI_HUB_NAME = "aihub-$ENV_NAME-$PROJECT_NAME"
+$AML_AI_ADMIN_ROLE_ID = "f2310ffd-7978-4846-9ad3-f6f7c1ec8dfd" # Azure AI Administrator
+
+try {
+  # Get Azure ML Workspace
+  $amlWorkspace = az ml workspace show -g $AI_PLATFORM_RG -w $AML_WORKSPACE_NAME -o json 2>/dev/null | ConvertFrom-Json
+  if ($amlWorkspace) {
+    $amlPrincipalId = $amlWorkspace.identity.principal_id
+    if ($amlPrincipalId) {
+      Write-Host "  ✓ Azure ML Workspace: $AML_WORKSPACE_NAME" -ForegroundColor Green
+      Write-Host "    Principal ID: $amlPrincipalId" -ForegroundColor Gray
+      
+      # Assign Azure AI Administrator at subscription scope
+      az role assignment create `
+        --assignee-object-id $amlPrincipalId `
+        --role $AML_AI_ADMIN_ROLE_ID `
+        --scope "/subscriptions/$SUBSCRIPTION_ID" `
+        --assignee-principal-type ServicePrincipal `
+        2>/dev/null
+      
+      Write-Host "    ✓ Azure AI Administrator role assigned" -ForegroundColor Green
+    }
+  }
+} catch {
+  Write-Host "  ⚠ Could not assign role to Azure ML Workspace: $_" -ForegroundColor Yellow
+}
+
+try {
+  # Get AI Foundry Hub
+  $aiHub = az ml workspace show -g $AI_PLATFORM_RG -w $AI_HUB_NAME -o json 2>/dev/null | ConvertFrom-Json
+  if ($aiHub) {
+    $aiHubPrincipalId = $aiHub.identity.principal_id
+    if ($aiHubPrincipalId) {
+      Write-Host "  ✓ AI Foundry Hub: $AI_HUB_NAME" -ForegroundColor Green
+      Write-Host "    Principal ID: $aiHubPrincipalId" -ForegroundColor Gray
+      
+      # Assign Azure AI Administrator at subscription scope
+      az role assignment create `
+        --assignee-object-id $aiHubPrincipalId `
+        --role $AML_AI_ADMIN_ROLE_ID `
+        --scope "/subscriptions/$SUBSCRIPTION_ID" `
+        --assignee-principal-type ServicePrincipal `
+        2>/dev/null
+      
+      Write-Host "    ✓ Azure AI Administrator role assigned" -ForegroundColor Green
+    }
+  }
+} catch {
+  Write-Host "  ⚠ Could not assign role to AI Foundry Hub: $_" -ForegroundColor Yellow
+}
+
+Write-Host ""
 Write-Host "Next Steps:" -ForegroundColor Cyan
 Write-Host "  1. Verify in Databricks: Catalog browser → Settings → Metastore" -ForegroundColor Cyan
-Write-Host "  2. Run 'azd deploy' to deploy UC catalogs and schemas" -ForegroundColor Cyan
-Write-Host "  3. Review DEPLOYMENT-PROCESS.md for verification steps" -ForegroundColor Cyan
+Write-Host "  2. Verify in Azure: rg-$ENV_NAME-$PROJECT_NAME-ai-platform → Role assignments" -ForegroundColor Cyan
+Write-Host "  3. Run 'azd deploy' to deploy UC catalogs and schemas" -ForegroundColor Cyan
+Write-Host "  4. Review DEPLOYMENT-PROCESS.md for verification steps" -ForegroundColor Cyan
 Write-Host ""
 
 Pop-Location
