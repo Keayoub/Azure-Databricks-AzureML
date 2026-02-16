@@ -9,6 +9,8 @@ param location string
 param projectName string
 param environmentName string
 param storageAccountId string
+param storageContainerName string = 'azureml'
+param adlsContainerName string = 'azureml'
 param keyVaultId string
 param containerRegistryId string
 param privateEndpointSubnetId string
@@ -21,6 +23,10 @@ var applicationInsightsName = 'appi-${environmentName}-${projectName}'
 var privateEndpointName = 'pe-${environmentName}-${projectName}-aml'
 
 var storageAccountName = split(storageAccountId, '/')[8]
+var storageAccountSubscriptionId = split(storageAccountId, '/')[2]
+var storageAccountResourceGroup = split(storageAccountId, '/')[4]
+var storageBlobEndpoint = 'https://${storageAccountName}.blob.${environment().suffixes.storage}'
+var storageDfsEndpoint = 'https://${storageAccountName}.dfs.${environment().suffixes.storage}'
 var keyVaultName = split(keyVaultId, '/')[8]
 var containerRegistryName = split(containerRegistryId, '/')[8]
 
@@ -140,8 +146,50 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
   }
 }
 
+// ========== Datastore (Azure Blob) ==========
+resource dataStore 'Microsoft.MachineLearningServices/workspaces/datastores@2024-04-01' = {
+  parent: workspace
+  name: 'ml-blob'
+  properties: {
+    datastoreType: 'AzureBlob'
+    accountName: storageAccountName
+    containerName: storageContainerName
+    endpoint: storageBlobEndpoint
+    protocol: 'https'
+    subscriptionId: storageAccountSubscriptionId
+    resourceGroup: storageAccountResourceGroup
+    credentials: {
+      credentialsType: 'None'
+    }
+    serviceDataAccessAuthIdentity: 'WorkspaceSystemAssignedIdentity'
+  }
+}
+
+// ========== Datastore (ADLS Gen2) ==========
+resource adlsDataStore 'Microsoft.MachineLearningServices/workspaces/datastores@2024-04-01' = {
+  parent: workspace
+  name: 'ml-adls'
+  properties: {
+    datastoreType: 'AzureDataLakeGen2'
+    accountName: storageAccountName
+    filesystem: adlsContainerName
+    endpoint: storageDfsEndpoint
+    protocol: 'https'
+    subscriptionId: storageAccountSubscriptionId
+    resourceGroup: storageAccountResourceGroup
+    credentials: {
+      credentialsType: 'None'
+    }
+    serviceDataAccessAuthIdentity: 'WorkspaceSystemAssignedIdentity'
+  }
+}
+
 // ========== Outputs ==========
 output workspaceName string = workspace.name
 output workspaceId string = workspace.id
 output workspacePrincipalId string = workspace.identity.principalId
 output applicationInsightsId string = applicationInsights.id
+output blobDatastoreName string = dataStore.name
+output blobDatastoreId string = dataStore.id
+output adlsDatastoreName string = adlsDataStore.name
+output adlsDatastoreId string = adlsDataStore.id
