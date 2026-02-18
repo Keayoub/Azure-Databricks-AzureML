@@ -24,6 +24,18 @@ param logAnalyticsWorkspaceId string = ''
 param enableDiagnostics bool = true
 param tags object
 
+@description('Enable shared compute instance for team')
+param enableSharedComputeInstance bool = true
+
+@description('VM size for shared compute instance')
+param sharedComputeInstanceVmSize string = 'Standard_D4s_v3'
+
+@description('Enable personal compute instance for development')
+param enablePersonalComputeInstance bool = true
+
+@description('VM size for personal compute instance')
+param personalComputeInstanceVmSize string = 'Standard_DS3_v2'
+
 var workspaceName = 'aml-${environmentName}-${projectName}'
 var applicationInsightsName = 'appi-${environmentName}-${projectName}'
 var privateEndpointName = 'pe-${environmentName}-${projectName}-aml'
@@ -173,10 +185,10 @@ resource computeCluster 'Microsoft.MachineLearningServices/workspaces/computes@2
   }
 }
 
-// ========== Compute Instance ==========
-resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@2025-10-01-preview' = {
+// ========== Compute Instance (Personal - Development) ==========
+resource personalComputeInstance 'Microsoft.MachineLearningServices/workspaces/computes@2025-10-01-preview' = if (enablePersonalComputeInstance) {
   parent: workspace
-  name: 'aml-compute-instance'
+  name: 'aml-compute-personal'
   location: location
   tags: tags
   identity: {
@@ -185,9 +197,37 @@ resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@
   properties: {
     computeType: 'ComputeInstance'
     computeLocation: location
-    description: 'Azure ML compute instance for development'
+    description: 'Azure ML personal compute instance for development'
     properties: {
-      vmSize: 'Standard_DS3_v2'
+      vmSize: personalComputeInstanceVmSize
+      subnet: {
+        id: computeSubnetId
+      }
+      applicationSharingPolicy: 'Personal'
+      enableSSO: false
+      sshSettings: {
+        sshPublicAccess: 'Disabled'
+      }
+      enableNodePublicIp: false
+    }
+  }
+}
+
+// ========== Compute Instance (Shared - Team) ==========
+resource sharedComputeInstance 'Microsoft.MachineLearningServices/workspaces/computes@2025-10-01-preview' = if (enableSharedComputeInstance) {
+  parent: workspace
+  name: 'aml-compute-shared'
+  location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    computeType: 'ComputeInstance'
+    computeLocation: location
+    description: 'Azure ML shared compute instance for team collaboration'
+    properties: {
+      vmSize: sharedComputeInstanceVmSize
       subnet: {
         id: computeSubnetId
       }
@@ -196,7 +236,7 @@ resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@
       sshSettings: {
         sshPublicAccess: 'Disabled'
       }
-      computeInstanceAuthorizationType: 'shared'
+      enableNodePublicIp: false
     }
   }
 }
@@ -265,8 +305,10 @@ output workspacePrincipalId string = workspace.identity.principalId
 output applicationInsightsId string = applicationInsights.id
 output computeClusterName string = computeCluster.name
 output computeClusterId string = computeCluster.id
-output computeInstanceName string = computeInstance.name
-output computeInstanceId string = computeInstance.id
+output personalComputeInstanceName string = enablePersonalComputeInstance ? personalComputeInstance.name : ''
+output personalComputeInstanceId string = enablePersonalComputeInstance ? personalComputeInstance.id : ''
+output sharedComputeInstanceName string = enableSharedComputeInstance ? sharedComputeInstance.name : ''
+output sharedComputeInstanceId string = enableSharedComputeInstance ? sharedComputeInstance.id : ''
 output blobDatastoreName string = dataStore.name
 output blobDatastoreId string = dataStore.id
 output adlsDatastoreName string = adlsDataStore.name
