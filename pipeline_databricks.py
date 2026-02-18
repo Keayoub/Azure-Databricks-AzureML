@@ -106,7 +106,7 @@ def create_databricks_trigger_script(output_dir: str = "./src"):
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    script_content = '''"""
+    script_content = r'''"""
 Script to trigger a Databricks job from AzureML pipeline.
 """
 import requests
@@ -156,7 +156,7 @@ def trigger_databricks_job(workspace_url, job_id, token):
         # Poll for job completion
         status_endpoint = f"{workspace_url}/api/2.1/jobs/runs/get"
         
-        print("\\nWaiting for job to complete...")
+        print("\nWaiting for job to complete...")
         while True:
             status_response = requests.get(
                 status_endpoint,
@@ -173,7 +173,7 @@ def trigger_databricks_job(workspace_url, job_id, token):
             
             if life_cycle_state in ["TERMINATED", "SKIPPED", "INTERNAL_ERROR"]:
                 result_state = state.get("result_state")
-                print(f"\\n✓ Job completed with state: {result_state}")
+                print(f"\n✓ Job completed with state: {result_state}")
                 
                 if result_state == "SUCCESS":
                     print("Job executed successfully!")

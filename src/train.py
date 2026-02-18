@@ -5,7 +5,7 @@ This script demonstrates a simple training workflow that can be submitted
 from Databricks to AzureML using the command() API.
 
 Usage:
-    python train.py --epochs 10 --learning-rate 0.01
+    python train.py --n-estimators 100 --test-size 0.2
 """
 
 import argparse
@@ -23,20 +23,6 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description="Train a simple classifier")
-    
-    parser.add_argument(
-        "--epochs",
-        type=int,
-        default=10,
-        help="Number of training epochs (iterations)"
-    )
-    
-    parser.add_argument(
-        "--learning-rate",
-        type=float,
-        default=0.01,
-        help="Learning rate for the optimizer"
-    )
     
     parser.add_argument(
         "--n-estimators",
@@ -159,8 +145,6 @@ def main():
     args = parse_args()
     
     print("\nConfiguration:")
-    print(f"  Epochs: {args.epochs}")
-    print(f"  Learning Rate: {args.learning_rate}")
     print(f"  N Estimators: {args.n_estimators}")
     print(f"  Test Size: {args.test_size}")
     print(f"  Random State: {args.random_state}")
@@ -171,8 +155,6 @@ def main():
     try:
         # Log parameters
         mlflow.log_params({
-            "epochs": args.epochs,
-            "learning_rate": args.learning_rate,
             "n_estimators": args.n_estimators,
             "test_size": args.test_size,
             "random_state": args.random_state,
