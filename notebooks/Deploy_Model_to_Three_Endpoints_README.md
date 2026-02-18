@@ -162,7 +162,7 @@ Instead of hardcoding credentials, use:
 
 #### Option 1: Databricks Secrets
 ```python
-import dbutils
+# dbutils is available globally in Databricks notebooks, no import needed
 
 subscription_id = dbutils.secrets.get(scope="azure", key="subscription-id")
 managed_api_key = dbutils.secrets.get(scope="azure", key="managed-endpoint-key")
