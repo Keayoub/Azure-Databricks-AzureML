@@ -6,9 +6,11 @@
 param location string
 param projectName string
 param environmentName string
+param privateEndpointSubnetId string = ''
 param tags object
 
 var keyVaultName = 'kv-${environmentName}-dbx-${projectName}-${uniqueString(resourceGroup().id, projectName, 'v2')}'
+var keyVaultPrivateEndpointName = 'pe-${keyVaultName}-vault'
 
 // Databricks Service Principal IDs by region
 // Source: https://learn.microsoft.com/azure/databricks/security/secrets/
@@ -63,6 +65,30 @@ resource databricksKeyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
           secrets: [
             'get'
             'list'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+// ========== Private Endpoint ==========
+// Creates private endpoint for Databricks Key Vault if subnet is provided
+resource databricksKeyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = if (!empty(privateEndpointSubnetId)) {
+  name: keyVaultPrivateEndpointName
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: keyVaultPrivateEndpointName
+        properties: {
+          privateLinkServiceId: databricksKeyVault.id
+          groupIds: [
+            'vault'
           ]
         }
       }

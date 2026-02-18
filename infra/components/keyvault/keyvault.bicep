@@ -12,9 +12,11 @@ param location string
 param projectName string
 param environmentName string
 param adminObjectId string = ''
+param privateEndpointSubnetId string = ''
 param tags object
 
 var keyVaultName = 'kv-${environmentName}-${projectName}-${uniqueString(resourceGroup().id, projectName, 'v2')}'
+var keyVaultPrivateEndpointName = 'pe-${keyVaultName}-vault'
 
 // ========== Key Vault ==========
 resource keyVault 'Microsoft.KeyVault/vaults@2024-04-01-preview' = {
@@ -49,6 +51,30 @@ resource keyVaultAdminRoleAssignment 'Microsoft.Authorization/roleAssignments@20
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483') // Key Vault Administrator
     principalId: adminObjectId
     principalType: 'User'
+  }
+}
+
+// ========== Private Endpoint ==========
+// Creates private endpoint for Key Vault if subnet is provided
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2024-01-01' = if (!empty(privateEndpointSubnetId)) {
+  name: keyVaultPrivateEndpointName
+  location: location
+  tags: tags
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: keyVaultPrivateEndpointName
+        properties: {
+          privateLinkServiceId: keyVault.id
+          groupIds: [
+            'vault'
+          ]
+        }
+      }
+    ]
   }
 }
 

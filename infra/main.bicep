@@ -203,6 +203,7 @@ module keyVault 'components/keyvault/keyvault.bicep' = {
     projectName: projectName
     environmentName: environmentName
     adminObjectId: adminObjectId
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
   }
 }
@@ -217,6 +218,7 @@ module databricksKeyVault 'components/keyvault/keyvault-databricks.bicep' = {
     location: location
     projectName: projectName
     environmentName: environmentName
+    privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     tags: tags
   }
 }
