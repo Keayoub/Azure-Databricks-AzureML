@@ -561,15 +561,16 @@ module amlStorageFileRole 'components/security/cross-rg-role-assignment.bicep' =
   }
 }
 
-// Azure ML Workspace - Key Vault Administrator
+// Azure ML Workspace - Key Vault Secrets Officer (Microsoft Recommended)
 // Scope: Shared RG
-// Purpose: Access secrets, certificates from platform Key Vault
+// Purpose: Access secrets from platform Key Vault with least-privilege principle
+// Role ID: b86a8fe4-44ce-4948-aee5-eccb2c155090 (Secrets Officer - Production Ready)
 module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aml-keyvault-role'
   params: {
     principalId: azureML!.outputs.workspacePrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')
     principalType: 'ServicePrincipal'
   }
 }
@@ -589,15 +590,16 @@ module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bi
   }
 }
 
-// AI Foundry Hub - Key Vault Administrator
+// AI Foundry Hub - Key Vault Secrets Officer (Microsoft Recommended)
 // Scope: Shared RG
-// Purpose: Access secrets, certificates from platform Key Vault
+// Purpose: Access secrets from platform Key Vault with least-privilege principle
+// Role ID: b86a8fe4-44ce-4948-aee5-eccb2c155090 (Secrets Officer - Production Ready)
 module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aihub-keyvault-role'
   params: {
     principalId: aiFoundry!.outputs.hubPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')
     principalType: 'ServicePrincipal'
   }
 }
