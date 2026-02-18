@@ -563,16 +563,16 @@ module amlStorageFileRole 'components/security/cross-rg-role-assignment.bicep' =
   }
 }
 
-// Azure ML Workspace - Key Vault Secrets Officer (Microsoft Recommended)
+// Azure ML Workspace - Key Vault Secrets User (Microsoft Recommended)
 // Scope: Shared RG
 // Purpose: Access secrets from platform Key Vault with least-privilege principle
-// Role ID: b86a8fe4-44ce-4948-aee5-eccb2c155090 (Secrets Officer - Production Ready)
+// Role ID: 4633458b-17de-408a-b874-0445c86300d1 (Secrets User - Production Ready)
 module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aml-keyvault-role'
   params: {
     principalId: azureML!.outputs.workspacePrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')
     principalType: 'ServicePrincipal'
   }
 }
@@ -592,16 +592,16 @@ module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bi
   }
 }
 
-// AI Foundry Hub - Key Vault Secrets Officer (Microsoft Recommended)
+// AI Foundry Hub - Key Vault Secrets User (Microsoft Recommended)
 // Scope: Shared RG
 // Purpose: Access secrets from platform Key Vault with least-privilege principle
-// Role ID: b86a8fe4-44ce-4948-aee5-eccb2c155090 (Secrets Officer - Production Ready)
+// Role ID: 4633458b-17de-408a-b874-0445c86300d1 (Secrets User - Production Ready)
 module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
   scope: resourceGroup(sharedResourceGroup.name)
   name: 'aihub-keyvault-role'
   params: {
     principalId: aiFoundry!.outputs.hubPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')
     principalType: 'ServicePrincipal'
   }
 }

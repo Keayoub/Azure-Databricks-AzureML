@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "519588328016188515"
+      "templateHash": "12382909510327203958"
     }
   },
   "parameters": {
@@ -2621,7 +2621,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "9359388413235195249"
+              "templateHash": "5601014786450335893"
             }
           },
           "parameters": {
@@ -2728,7 +2728,7 @@
                     "name": "[variables('osDiskName')]",
                     "createOption": "FromImage",
                     "managedDisk": {
-                      "storageAccountType": "Premium_LRS"
+                      "storageAccountType": "Standard_LRS"
                     },
                     "diskSizeGB": 128,
                     "deleteOption": "Delete"
@@ -6191,7 +6191,7 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment'), '2025-04-01').outputs.workspacePrincipalId.value]"
           },
           "roleDefinitionId": {
-            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')]"
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')]"
           },
           "principalType": {
             "value": "ServicePrincipal"
@@ -6335,7 +6335,7 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.hubPrincipalId.value]"
           },
           "roleDefinitionId": {
-            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b86a8fe4-44ce-4948-aee5-eccb2c155090')]"
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')]"
           },
           "principalType": {
             "value": "ServicePrincipal"

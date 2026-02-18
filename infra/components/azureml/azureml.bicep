@@ -191,11 +191,12 @@ resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@
       subnet: {
         id: computeSubnetId
       }
-      applicationSharingPolicy: 'Personal'
+      applicationSharingPolicy: 'Shared'
       enableSSO: false
       sshSettings: {
         sshPublicAccess: 'Disabled'
       }
+      computeInstanceAuthorizationType: 'shared'
     }
   }
 }
