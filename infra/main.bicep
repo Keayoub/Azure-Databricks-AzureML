@@ -452,6 +452,10 @@ module azureML 'components/azureml/azureml.bicep' = if (deployAzureML) {
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     computeSubnetId: networking.outputs.azureMLComputeSubnetId
     apiPrivateDnsZoneId: azuremlDns!.outputs.apiPrivateDnsZoneId
+    notebooksPrivateDnsZoneId: azuremlDns!.outputs.notebooksPrivateDnsZoneId
+    instancesPrivateDnsZoneId: azuremlDns!.outputs.instancesPrivateDnsZoneId
+    contentPrivateDnsZoneId: azuremlDns!.outputs.contentPrivateDnsZoneId
+    inferencePrivateDnsZoneId: azuremlDns!.outputs.inferencePrivateDnsZoneId
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     enableDiagnostics: true
     tags: tags
@@ -471,6 +475,10 @@ module aiFoundry 'components/ai-foundry/ai-foundry.bicep' = if (deployAIFoundry)
     containerRegistryId: containerRegistry.outputs.acrId
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     apiPrivateDnsZoneId: azuremlDns!.outputs.apiPrivateDnsZoneId
+    notebooksPrivateDnsZoneId: azuremlDns!.outputs.notebooksPrivateDnsZoneId
+    instancesPrivateDnsZoneId: azuremlDns!.outputs.instancesPrivateDnsZoneId
+    contentPrivateDnsZoneId: azuremlDns!.outputs.contentPrivateDnsZoneId
+    inferencePrivateDnsZoneId: azuremlDns!.outputs.inferencePrivateDnsZoneId
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     enableDiagnostics: true
     tags: tags

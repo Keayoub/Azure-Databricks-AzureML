@@ -16,6 +16,10 @@ param containerRegistryId string
 param privateEndpointSubnetId string
 param computeSubnetId string
 param apiPrivateDnsZoneId string
+param notebooksPrivateDnsZoneId string
+param instancesPrivateDnsZoneId string
+param contentPrivateDnsZoneId string
+param inferencePrivateDnsZoneId string
 param logAnalyticsWorkspaceId string = ''
 param enableDiagnostics bool = true
 param tags object
@@ -105,9 +109,33 @@ resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneG
   properties: {
     privateDnsZoneConfigs: [
       {
-        name: 'config'
+        name: 'api-config'
         properties: {
           privateDnsZoneId: apiPrivateDnsZoneId
+        }
+      }
+      {
+        name: 'notebooks-config'
+        properties: {
+          privateDnsZoneId: notebooksPrivateDnsZoneId
+        }
+      }
+      {
+        name: 'instances-config'
+        properties: {
+          privateDnsZoneId: instancesPrivateDnsZoneId
+        }
+      }
+      {
+        name: 'content-config'
+        properties: {
+          privateDnsZoneId: contentPrivateDnsZoneId
+        }
+      }
+      {
+        name: 'inference-config'
+        properties: {
+          privateDnsZoneId: inferencePrivateDnsZoneId
         }
       }
     ]
@@ -163,17 +191,11 @@ resource computeInstance 'Microsoft.MachineLearningServices/workspaces/computes@
       subnet: {
         id: computeSubnetId
       }
-      disableNodePublicIp: true
       applicationSharingPolicy: 'Personal'
-      releaseQuota: false
-      enableNodePublicIp: false
+      enableSSO: false
       sshSettings: {
-        status: 'Disabled'
+        sshPublicAccess: 'Disabled'
       }
-      setupScripts: {
-        startupScript: null
-      }
-      customImage: null
     }
   }
 }
