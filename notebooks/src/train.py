@@ -122,12 +122,13 @@ def evaluate_model(model, X_test, y_test):
     # precision = precision_score(y_test, y_pred, average='weighted')
     # recall = recall_score(y_test, y_pred, average='weighted')
     
-    # For demonstration purposes
+    # PLACEHOLDER VALUES - Replace with actual model evaluation in production
+    # These are demonstration values only and not from real model training
     metrics = {
-        'accuracy': 0.95,
-        'precision': 0.93,
-        'recall': 0.92,
-        'f1_score': 0.925
+        'accuracy': 0.95,  # Example value
+        'precision': 0.93,  # Example value
+        'recall': 0.92,  # Example value
+        'f1_score': 0.925  # Example value
     }
     
     print(f"Model evaluation completed: {metrics}")
