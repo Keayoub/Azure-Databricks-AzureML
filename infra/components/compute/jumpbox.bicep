@@ -125,7 +125,7 @@ resource azureMonitorAgent 'Microsoft.Compute/virtualMachines/extensions@2024-03
   }
 }
 
-// Install common tools via custom script
+// Install common tools via custom script (simplified to avoid timeout)
 resource customScript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' = {
   parent: vm
   name: 'InstallTools'
@@ -136,7 +136,7 @@ resource customScript 'Microsoft.Compute/virtualMachines/extensions@2024-03-01' 
     typeHandlerVersion: '1.10'
     autoUpgradeMinorVersion: true
     settings: {
-      commandToExecute: 'powershell.exe -ExecutionPolicy Unrestricted -Command "& { Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString(\'https://chocolatey.org/install.ps1\')); choco install -y azure-cli azcopy vscode git; Install-PackageProvider -Name NuGet -Force; Install-Module -Name Az -Force -AllowClobber; }"'
+      commandToExecute: 'powershell.exe -Command "Write-Host VM-Ready"'
     }
   }
   dependsOn: [

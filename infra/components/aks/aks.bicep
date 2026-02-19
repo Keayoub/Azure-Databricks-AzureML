@@ -10,25 +10,6 @@ param nodeCount int
 param tags object
 
 var clusterName = 'aks-${projectName}-${environmentName}'
-var logAnalyticsWorkspaceName = 'log-${projectName}-${environmentName}'
-
-// ========== Log Analytics Workspace for AKS ==========
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
-  name: logAnalyticsWorkspaceName
-  location: location
-  tags: tags
-  properties: {
-    sku: {
-      name: 'PerGB2018'
-    }
-    retentionInDays: 30
-    features: {
-      enableLogAccessUsingOnlyResourcePermissions: true
-    }
-    publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Enabled'
-  }
-}
 
 // ========== Azure Kubernetes Service ==========
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
@@ -44,7 +25,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   }
   properties: {
     dnsPrefix: clusterName
-    kubernetesVersion: '1.29' // Latest stable version
+    kubernetesVersion: '1.32.0' // Using 1.32.0 which supports both KubernetesOfficial and LTS plans
     enableRBAC: true
     enablePodSecurityPolicy: false // Deprecated - use Pod Security Standards instead
     networkProfile: {
@@ -60,7 +41,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       {
         name: 'systempool'
         count: nodeCount
-        vmSize: 'Standard_DS3_v2'
+        vmSize: 'Standard_D2s_v3'
         osType: 'Linux'
         osSKU: 'AzureLinux'
         maxCount: 10
@@ -76,7 +57,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       {
         name: 'userpool'
         count: nodeCount
-        vmSize: 'Standard_D4s_v3'
+        vmSize: 'Standard_D4s_v5'
         osType: 'Linux'
         osSKU: 'AzureLinux'
         maxCount: 20
@@ -103,10 +84,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     }
     addonProfiles: {
       omsagent: {
-        enabled: true
-        config: {
-          logAnalyticsWorkspaceResourceID: logAnalyticsWorkspace.id
-        }
+        enabled: false
       }
       azurepolicy: {
         enabled: true
@@ -116,12 +94,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       }
     }
     securityProfile: {
-      defender: {
-        logAnalyticsWorkspaceResourceId: logAnalyticsWorkspace.id
-        securityMonitoring: {
-          enabled: true
-        }
-      }
       imageCleaner: {
         enabled: true
         intervalHours: 24
@@ -130,11 +102,8 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         enabled: true
       }
     }
-    httpProxyConfig: {
-      httpProxy: null
-      httpsProxy: null
-      noProxy: []
-      trustedCa: null
+    oidcIssuerProfile: {
+      enabled: true
     }
     storageProfile: {
       blobCSIDriver: {

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "12382909510327203958"
+      "templateHash": "674971930202468489"
     }
   },
   "parameters": {
@@ -208,6 +208,34 @@
       "type": "string",
       "metadata": {
         "description": "Your object ID for admin permissions"
+      }
+    },
+    "enableSharedComputeInstance": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable shared compute instance for Azure ML team"
+      }
+    },
+    "enablePersonalComputeInstance": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable personal compute instance for Azure ML development"
+      }
+    },
+    "sharedComputeInstanceVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v3",
+      "metadata": {
+        "description": "VM size for Azure ML shared compute instance"
+      }
+    },
+    "personalComputeInstanceVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS3_v2",
+      "metadata": {
+        "description": "VM size for Azure ML personal compute instance"
       }
     },
     "tags": {
@@ -2621,7 +2649,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "5601014786450335893"
+              "templateHash": "351581291121140030"
             }
           },
           "parameters": {
@@ -2788,7 +2816,7 @@
                 "typeHandlerVersion": "1.10",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -Command \"& { Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1')); choco install -y azure-cli azcopy vscode git; Install-PackageProvider -Name NuGet -Force; Install-Module -Name Az -Force -AllowClobber; }\""
+                  "commandToExecute": "powershell.exe -Command \"Write-Host VM-Ready\""
                 }
               },
               "dependsOn": [
@@ -2861,7 +2889,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "7034876938482989548"
+              "templateHash": "9841822750461820574"
             }
           },
           "parameters": {
@@ -2885,28 +2913,9 @@
             }
           },
           "variables": {
-            "clusterName": "[format('aks-{0}-{1}', parameters('projectName'), parameters('environmentName'))]",
-            "logAnalyticsWorkspaceName": "[format('log-{0}-{1}', parameters('projectName'), parameters('environmentName'))]"
+            "clusterName": "[format('aks-{0}-{1}', parameters('projectName'), parameters('environmentName'))]"
           },
           "resources": [
-            {
-              "type": "Microsoft.OperationalInsights/workspaces",
-              "apiVersion": "2022-10-01",
-              "name": "[variables('logAnalyticsWorkspaceName')]",
-              "location": "[parameters('location')]",
-              "tags": "[parameters('tags')]",
-              "properties": {
-                "sku": {
-                  "name": "PerGB2018"
-                },
-                "retentionInDays": 30,
-                "features": {
-                  "enableLogAccessUsingOnlyResourcePermissions": true
-                },
-                "publicNetworkAccessForIngestion": "Enabled",
-                "publicNetworkAccessForQuery": "Enabled"
-              }
-            },
             {
               "type": "Microsoft.ContainerService/managedClusters",
               "apiVersion": "2024-02-01",
@@ -2922,7 +2931,7 @@
               },
               "properties": {
                 "dnsPrefix": "[variables('clusterName')]",
-                "kubernetesVersion": "1.29",
+                "kubernetesVersion": "1.32.0",
                 "enableRBAC": true,
                 "enablePodSecurityPolicy": false,
                 "networkProfile": {
@@ -2938,7 +2947,7 @@
                   {
                     "name": "systempool",
                     "count": "[parameters('nodeCount')]",
-                    "vmSize": "Standard_DS3_v2",
+                    "vmSize": "Standard_D2s_v3",
                     "osType": "Linux",
                     "osSKU": "AzureLinux",
                     "maxCount": 10,
@@ -2954,7 +2963,7 @@
                   {
                     "name": "userpool",
                     "count": "[parameters('nodeCount')]",
-                    "vmSize": "Standard_D4s_v3",
+                    "vmSize": "Standard_D4s_v5",
                     "osType": "Linux",
                     "osSKU": "AzureLinux",
                     "maxCount": 20,
@@ -2981,10 +2990,7 @@
                 },
                 "addonProfiles": {
                   "omsagent": {
-                    "enabled": true,
-                    "config": {
-                      "logAnalyticsWorkspaceResourceID": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
-                    }
+                    "enabled": false
                   },
                   "azurepolicy": {
                     "enabled": true,
@@ -2994,12 +3000,6 @@
                   }
                 },
                 "securityProfile": {
-                  "defender": {
-                    "logAnalyticsWorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]",
-                    "securityMonitoring": {
-                      "enabled": true
-                    }
-                  },
                   "imageCleaner": {
                     "enabled": true,
                     "intervalHours": 24
@@ -3008,11 +3008,8 @@
                     "enabled": true
                   }
                 },
-                "httpProxyConfig": {
-                  "httpProxy": null,
-                  "httpsProxy": null,
-                  "noProxy": [],
-                  "trustedCa": null
+                "oidcIssuerProfile": {
+                  "enabled": true
                 },
                 "storageProfile": {
                   "blobCSIDriver": {
@@ -3028,10 +3025,7 @@
                     "enabled": true
                   }
                 }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsWorkspaceName'))]"
-              ]
+              }
             }
           ],
           "outputs": {
@@ -4831,6 +4825,18 @@
           "enableDiagnostics": {
             "value": true
           },
+          "enableSharedComputeInstance": {
+            "value": "[parameters('enableSharedComputeInstance')]"
+          },
+          "enablePersonalComputeInstance": {
+            "value": "[parameters('enablePersonalComputeInstance')]"
+          },
+          "sharedComputeInstanceVmSize": {
+            "value": "[parameters('sharedComputeInstanceVmSize')]"
+          },
+          "personalComputeInstanceVmSize": {
+            "value": "[parameters('personalComputeInstanceVmSize')]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -4842,7 +4848,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "17505927409877879713"
+              "templateHash": "13419678081373925729"
             }
           },
           "parameters": {
@@ -4903,6 +4909,34 @@
             },
             "tags": {
               "type": "object"
+            },
+            "enableSharedComputeInstance": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable shared compute instance for team"
+              }
+            },
+            "sharedComputeInstanceVmSize": {
+              "type": "string",
+              "defaultValue": "Standard_D4s_v3",
+              "metadata": {
+                "description": "VM size for shared compute instance"
+              }
+            },
+            "enablePersonalComputeInstance": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable personal compute instance for development"
+              }
+            },
+            "personalComputeInstanceVmSize": {
+              "type": "string",
+              "defaultValue": "Standard_DS3_v2",
+              "metadata": {
+                "description": "VM size for personal compute instance"
+              }
             }
           },
           "variables": {
@@ -5061,9 +5095,10 @@
               ]
             },
             {
+              "condition": "[parameters('enablePersonalComputeInstance')]",
               "type": "Microsoft.MachineLearningServices/workspaces/computes",
               "apiVersion": "2025-10-01-preview",
-              "name": "[format('{0}/{1}', variables('workspaceName'), 'aml-compute-instance')]",
+              "name": "[format('{0}/{1}', variables('workspaceName'), 'aml-compute-personal')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "identity": {
@@ -5072,9 +5107,9 @@
               "properties": {
                 "computeType": "ComputeInstance",
                 "computeLocation": "[parameters('location')]",
-                "description": "Azure ML compute instance for development",
+                "description": "Azure ML personal compute instance for development",
                 "properties": {
-                  "vmSize": "Standard_DS3_v2",
+                  "vmSize": "[parameters('personalComputeInstanceVmSize')]",
                   "subnet": {
                     "id": "[parameters('computeSubnetId')]"
                   },
@@ -5082,7 +5117,39 @@
                   "enableSSO": false,
                   "sshSettings": {
                     "sshPublicAccess": "Disabled"
-                  }
+                  },
+                  "enableNodePublicIp": false
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', variables('workspaceName'))]"
+              ]
+            },
+            {
+              "condition": "[parameters('enableSharedComputeInstance')]",
+              "type": "Microsoft.MachineLearningServices/workspaces/computes",
+              "apiVersion": "2025-10-01-preview",
+              "name": "[format('{0}/{1}', variables('workspaceName'), 'aml-compute-shared')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "computeType": "ComputeInstance",
+                "computeLocation": "[parameters('location')]",
+                "description": "Azure ML shared compute instance for team collaboration",
+                "properties": {
+                  "vmSize": "[parameters('sharedComputeInstanceVmSize')]",
+                  "subnet": {
+                    "id": "[parameters('computeSubnetId')]"
+                  },
+                  "applicationSharingPolicy": "Shared",
+                  "enableSSO": false,
+                  "sshSettings": {
+                    "sshPublicAccess": "Disabled"
+                  },
+                  "enableNodePublicIp": false
                 }
               },
               "dependsOn": [
@@ -5180,13 +5247,21 @@
               "type": "string",
               "value": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', variables('workspaceName'), 'cpu-cluster')]"
             },
-            "computeInstanceName": {
+            "personalComputeInstanceName": {
               "type": "string",
-              "value": "aml-compute-instance"
+              "value": "[if(parameters('enablePersonalComputeInstance'), 'aml-compute-personal', '')]"
             },
-            "computeInstanceId": {
+            "personalComputeInstanceId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces/computes', variables('workspaceName'), 'aml-compute-instance')]"
+              "value": "[if(parameters('enablePersonalComputeInstance'), resourceId('Microsoft.MachineLearningServices/workspaces/computes', variables('workspaceName'), 'aml-compute-personal'), '')]"
+            },
+            "sharedComputeInstanceName": {
+              "type": "string",
+              "value": "[if(parameters('enableSharedComputeInstance'), 'aml-compute-shared', '')]"
+            },
+            "sharedComputeInstanceId": {
+              "type": "string",
+              "value": "[if(parameters('enableSharedComputeInstance'), resourceId('Microsoft.MachineLearningServices/workspaces/computes', variables('workspaceName'), 'aml-compute-shared'), '')]"
             },
             "blobDatastoreName": {
               "type": "string",
@@ -6176,78 +6251,6 @@
       ]
     },
     {
-      "condition": "[parameters('deployAzureML')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
-      "name": "aml-keyvault-role",
-      "resourceGroup": "[variables('sharedRgName')]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "principalId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment'), '2025-04-01').outputs.workspacePrincipalId.value]"
-          },
-          "roleDefinitionId": {
-            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')]"
-          },
-          "principalType": {
-            "value": "ServicePrincipal"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.40.2.10011",
-              "templateHash": "1921691406057001531"
-            }
-          },
-          "parameters": {
-            "principalId": {
-              "type": "string"
-            },
-            "principalType": {
-              "type": "string",
-              "defaultValue": "ServicePrincipal",
-              "metadata": {
-                "description": "The principal type: User, Group, ServicePrincipal, etc."
-              }
-            },
-            "roleDefinitionId": {
-              "type": "string"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
-              "properties": {
-                "roleDefinitionId": "[parameters('roleDefinitionId')]",
-                "principalId": "[parameters('principalId')]",
-                "principalType": "[parameters('principalType')]"
-              }
-            }
-          ],
-          "outputs": {
-            "roleAssignmentId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
-      ]
-    },
-    {
       "condition": "[parameters('deployAIFoundry')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -6264,78 +6267,6 @@
           },
           "roleDefinitionId": {
             "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]"
-          },
-          "principalType": {
-            "value": "ServicePrincipal"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.40.2.10011",
-              "templateHash": "1921691406057001531"
-            }
-          },
-          "parameters": {
-            "principalId": {
-              "type": "string"
-            },
-            "principalType": {
-              "type": "string",
-              "defaultValue": "ServicePrincipal",
-              "metadata": {
-                "description": "The principal type: User, Group, ServicePrincipal, etc."
-              }
-            },
-            "roleDefinitionId": {
-              "type": "string"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
-              "properties": {
-                "roleDefinitionId": "[parameters('roleDefinitionId')]",
-                "principalId": "[parameters('principalId')]",
-                "principalType": "[parameters('principalType')]"
-              }
-            }
-          ],
-          "outputs": {
-            "roleAssignmentId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
-            }
-          }
-        }
-      },
-      "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment')]",
-        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
-      ]
-    },
-    {
-      "condition": "[parameters('deployAIFoundry')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
-      "name": "aihub-keyvault-role",
-      "resourceGroup": "[variables('sharedRgName')]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "principalId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.hubPrincipalId.value]"
-          },
-          "roleDefinitionId": {
-            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')]"
           },
           "principalType": {
             "value": "ServicePrincipal"
@@ -6530,6 +6461,294 @@
         }
       },
       "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAzureML')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "aml-acr-pull-role",
+      "resourceGroup": "[variables('sharedRgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment'), '2025-04-01').outputs.workspacePrincipalId.value]"
+          },
+          "roleDefinitionId": {
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]"
+          },
+          "principalType": {
+            "value": "ServicePrincipal"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.40.2.10011",
+              "templateHash": "1921691406057001531"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "ServicePrincipal",
+              "metadata": {
+                "description": "The principal type: User, Group, ServicePrincipal, etc."
+              }
+            },
+            "roleDefinitionId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
+              "properties": {
+                "roleDefinitionId": "[parameters('roleDefinitionId')]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAzureML')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "aml-acr-push-role",
+      "resourceGroup": "[variables('sharedRgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment'), '2025-04-01').outputs.workspacePrincipalId.value]"
+          },
+          "roleDefinitionId": {
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')]"
+          },
+          "principalType": {
+            "value": "ServicePrincipal"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.40.2.10011",
+              "templateHash": "1921691406057001531"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "ServicePrincipal",
+              "metadata": {
+                "description": "The principal type: User, Group, ServicePrincipal, etc."
+              }
+            },
+            "roleDefinitionId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
+              "properties": {
+                "roleDefinitionId": "[parameters('roleDefinitionId')]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'azureml-deployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAIFoundry')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "aihub-acr-pull-role",
+      "resourceGroup": "[variables('sharedRgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.hubPrincipalId.value]"
+          },
+          "roleDefinitionId": {
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]"
+          },
+          "principalType": {
+            "value": "ServicePrincipal"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.40.2.10011",
+              "templateHash": "1921691406057001531"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "ServicePrincipal",
+              "metadata": {
+                "description": "The principal type: User, Group, ServicePrincipal, etc."
+              }
+            },
+            "roleDefinitionId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
+              "properties": {
+                "roleDefinitionId": "[parameters('roleDefinitionId')]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('deployAIFoundry')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "aihub-acr-push-role",
+      "resourceGroup": "[variables('sharedRgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "principalId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.hubPrincipalId.value]"
+          },
+          "roleDefinitionId": {
+            "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')]"
+          },
+          "principalType": {
+            "value": "ServicePrincipal"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.40.2.10011",
+              "templateHash": "1921691406057001531"
+            }
+          },
+          "parameters": {
+            "principalId": {
+              "type": "string"
+            },
+            "principalType": {
+              "type": "string",
+              "defaultValue": "ServicePrincipal",
+              "metadata": {
+                "description": "The principal type: User, Group, ServicePrincipal, etc."
+              }
+            },
+            "roleDefinitionId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId)]",
+              "properties": {
+                "roleDefinitionId": "[parameters('roleDefinitionId')]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "[parameters('principalType')]"
+              }
+            }
+          ],
+          "outputs": {
+            "roleAssignmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Authorization/roleAssignments', guid(parameters('principalId'), parameters('roleDefinitionId'), subscription().subscriptionId))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('aiPlatformRgName')), 'Microsoft.Resources/deployments', 'ai-foundry-deployment')]",
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('sharedRgName'))]"
       ]
     }

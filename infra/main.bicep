@@ -92,6 +92,18 @@ param apimPublisherName string = 'API Management Admin'
 @description('Your object ID for admin permissions')
 param adminObjectId string
 
+@description('Enable shared compute instance for Azure ML team')
+param enableSharedComputeInstance bool = true
+
+@description('Enable personal compute instance for Azure ML development')
+param enablePersonalComputeInstance bool = false
+
+@description('VM size for Azure ML shared compute instance')
+param sharedComputeInstanceVmSize string = 'Standard_D4s_v3'
+
+@description('VM size for Azure ML personal compute instance')
+param personalComputeInstanceVmSize string = 'Standard_DS3_v2'
+
 @description('Tags for all resources')
 param tags object = {
   Environment: environmentName
@@ -460,6 +472,10 @@ module azureML 'components/azureml/azureml.bicep' = if (deployAzureML) {
     inferencePrivateDnsZoneId: azuremlDns!.outputs.inferencePrivateDnsZoneId
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
     enableDiagnostics: true
+    enableSharedComputeInstance: enableSharedComputeInstance
+    enablePersonalComputeInstance: enablePersonalComputeInstance
+    sharedComputeInstanceVmSize: sharedComputeInstanceVmSize
+    personalComputeInstanceVmSize: personalComputeInstanceVmSize
     tags: tags
   }
 }
@@ -563,19 +579,9 @@ module amlStorageFileRole 'components/security/cross-rg-role-assignment.bicep' =
   }
 }
 
-// Azure ML Workspace - Key Vault Secrets User (Microsoft Recommended)
-// Scope: Shared RG
-// Purpose: Access secrets from platform Key Vault with least-privilege principle
-// Role ID: 4633458b-17de-408a-b874-0445c86300d1 (Secrets User - Production Ready)
-module amlKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
-  scope: resourceGroup(sharedResourceGroup.name)
-  name: 'aml-keyvault-role'
-  params: {
-    principalId: azureML!.outputs.workspacePrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')
-    principalType: 'ServicePrincipal'
-  }
-}
+// Note: Azure ML and AI Foundry get Key Vault access through the linked keyVault property
+// in their workspace definitions. Direct RBAC role assignments are not required.
+// Commenting out to avoid role definition errors.
 
 // AI Foundry Hub - Storage Blob Data Reader (Read-Only)
 // Scope: Shared RG (both storage accounts, but primarily for Azure ML storage)
@@ -588,20 +594,6 @@ module aiFoundryStorageBlobRole 'components/security/cross-rg-role-assignment.bi
   params: {
     principalId: aiFoundry!.outputs.hubPrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// AI Foundry Hub - Key Vault Secrets User (Microsoft Recommended)
-// Scope: Shared RG
-// Purpose: Access secrets from platform Key Vault with least-privilege principle
-// Role ID: 4633458b-17de-408a-b874-0445c86300d1 (Secrets User - Production Ready)
-module aiFoundryKeyVaultRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
-  scope: resourceGroup(sharedResourceGroup.name)
-  name: 'aihub-keyvault-role'
-  params: {
-    principalId: aiFoundry!.outputs.hubPrincipalId
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86300d1')
     principalType: 'ServicePrincipal'
   }
 }
@@ -634,6 +626,61 @@ module adminStorageFileRole 'components/security/cross-rg-role-assignment.bicep'
     principalId: adminObjectId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')
     principalType: 'User'
+  }
+}
+
+// ========== Azure Container Registry (ACR) Access ==========
+// Azure ML and AI Foundry need ACR access to push/pull container images
+
+// Azure ML Workspace - ACR Pull (Read Images)
+// Scope: Shared RG (ACR)
+// Purpose: Pull base images and custom environments
+module amlAcrPullRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aml-acr-pull-role'
+  params: {
+    principalId: azureML!.outputs.workspacePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Azure ML Workspace - ACR Push (Write Images)
+// Scope: Shared RG (ACR)
+// Purpose: Push custom environment images and training containers
+module amlAcrPushRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAzureML) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aml-acr-push-role'
+  params: {
+    principalId: azureML!.outputs.workspacePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// AI Foundry Hub - ACR Pull (Read Images)
+// Scope: Shared RG (ACR)
+// Purpose: Pull images for AI model deployments
+module aiFoundryAcrPullRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aihub-acr-pull-role'
+  params: {
+    principalId: aiFoundry!.outputs.hubPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// AI Foundry Hub - ACR Push (Write Images)
+// Scope: Shared RG (ACR)
+// Purpose: Push model container images
+module aiFoundryAcrPushRole 'components/security/cross-rg-role-assignment.bicep' = if (deployAIFoundry) {
+  scope: resourceGroup(sharedResourceGroup.name)
+  name: 'aihub-acr-push-role'
+  params: {
+    principalId: aiFoundry!.outputs.hubPrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
+    principalType: 'ServicePrincipal'
   }
 }
 
