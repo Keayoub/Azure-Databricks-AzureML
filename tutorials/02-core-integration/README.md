@@ -86,6 +86,34 @@ These notebooks demonstrate the foundational connectivity patterns between Azure
 
 ---
 
+### 5. **AzureML_KeyVault_Integration.ipynb**
+**Purpose:** Test and validate AzureML and Key Vault integration
+
+**What you'll learn:**
+- Authenticate to both AzureML and Key Vault using managed identities
+- Store and retrieve secrets in Key Vault using RBAC
+- Access Key Vault secrets via Databricks secret scopes
+- Use Key Vault secrets in AzureML training jobs
+- Compare RBAC vs Access Policies permission models
+- Implement security best practices for secret management
+
+**Use cases:**
+- Secure storage of API keys, connection strings, and credentials
+- Centralized secret management for AzureML workloads
+- Databricks notebooks that need secure credential access
+- Production deployments following least privilege principle
+- Audit and compliance requirements
+
+**Time to complete:** 30-45 minutes
+
+**Key Features:**
+- Tests both read and write permissions
+- Validates cross-service authentication
+- Demonstrates common integration patterns
+- Includes security best practices
+
+---
+
 ## 🎯 Integration Patterns
 
 ### Pattern 1: Data Science in Databricks, Training in AzureML
@@ -105,6 +133,12 @@ AzureML (model hosting) → Databricks (scoring at scale)
 Databricks ↔ AzureML (models deployed on both platforms)
 ```
 **Use:** Both connectivity notebooks
+
+### Pattern 4: Secure Secret Management
+```
+Key Vault → AzureML + Databricks (centralized credential management)
+```
+**Use:** `AzureML_KeyVault_Integration.ipynb`
 
 ---
 
@@ -134,12 +168,14 @@ All notebooks support multiple authentication patterns:
 ### Azure Resources
 - ✅ Azure Databricks workspace (Premium tier recommended)
 - ✅ Azure Machine Learning workspace
+- ✅ Azure Key Vault (for secret management)
 - ✅ Network connectivity (private or public)
 - ✅ RBAC roles: Contributor or AzureML Data Scientist
+- ✅ Key Vault roles: Key Vault Secrets User (read) or Key Vault Secrets Officer (read/write)
 
 ### Python Packages (install in Databricks)
 ```bash
-%pip install azure-ai-ml azure-identity mlflow
+%pip install azure-ai-ml azure-identity azure-keyvault-secrets mlflow
 ```
 
 ### Configuration Values
@@ -166,6 +202,12 @@ You'll need to know:
 ### Issue: `Model not found in registry`
 **Solution:** Verify model registration completed successfully and use correct model name/version
 
+### Issue: `Access denied to Key Vault (403)`
+**Solution:** Ensure identity has RBAC role assigned (Key Vault Secrets User or Key Vault Secrets Officer)
+
+### Issue: `Databricks secret scope not found`
+**Solution:** Create Key Vault-backed secret scope at `https://<databricks-instance>#secrets/createScope`
+
 ---
 
 ## 🎓 Learning Path
@@ -182,6 +224,9 @@ You'll need to know:
 - [Azure ML SDK v2 Documentation](https://learn.microsoft.com/azure/machine-learning/)
 - [Databricks Azure ML Integration](https://learn.microsoft.com/azure/databricks/)
 - [Managed Identity Best Practices](https://learn.microsoft.com/azure/databricks/security/aad-token)
+- [Azure Key Vault RBAC Guide](https://learn.microsoft.com/azure/key-vault/general/rbac-guide)
+- [Databricks Secret Scopes](https://learn.microsoft.com/azure/databricks/security/secrets/secret-scopes)
+- [Azure ML Security Best Practices](https://learn.microsoft.com/azure/machine-learning/concept-enterprise-security)
 
 ---
 

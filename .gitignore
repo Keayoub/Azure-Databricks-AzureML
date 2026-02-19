@@ -178,3 +178,4 @@ infra/main.local.bicepparam
 # Bicep parameter files with actual values (use .example templates)
 main.bicepparam
 main.local.bicepparam
+out.json

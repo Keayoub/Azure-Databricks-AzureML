@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "7928592865031703637"
+      "templateHash": "16063670226671110158"
     }
   },
   "parameters": {
@@ -2649,7 +2649,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "8533344791012509641"
+              "templateHash": "7156283706369133302"
             }
           },
           "parameters": {
@@ -2681,7 +2681,7 @@
             }
           },
           "variables": {
-            "vmName": "[format('vm-jmp-{0}', parameters('environmentName'))]",
+            "vmName": "[format('vm-win11-{0}', parameters('environmentName'))]",
             "nicName": "[format('nic-{0}', variables('vmName'))]",
             "osDiskName": "[format('{0}-osdisk', variables('vmName'))]"
           },

@@ -13,7 +13,7 @@ param tags object
 @description('VM size for jumpbox')
 param vmSize string = 'Standard_D2s_v3'
 
-var vmName = 'vm-jmp-${environmentName}' // Shortened to fit 15 char Windows limit
+var vmName = 'vm-win11-${environmentName}' // Changed name to force new VM creation with Windows 11
 var nicName = 'nic-${vmName}'
 var osDiskName = '${vmName}-osdisk'
 
