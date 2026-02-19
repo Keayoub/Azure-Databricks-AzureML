@@ -1,0 +1,63 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+# Azure ML Job Configuration for AzureML_KeyVault_Integration Notebook
+type: command
+
+# Job Metadata
+display_name: AzureML-KeyVault-Integration-Test
+description: "Validates integration between Azure ML workspace and Azure Key Vault using managed identity"
+experiment_name: azureml-keyvault-integration
+
+# Code and Command
+code: ./
+command: >-
+  pip install papermill ipykernel &&
+  papermill 
+  AzureML_KeyVault_Integration.ipynb 
+  output_AzureML_KeyVault_Integration.ipynb
+  -p AZURE_SUBSCRIPTION_ID ${{inputs.subscription_id}}
+  -p AZURE_RESOURCE_GROUP ${{inputs.resource_group}}
+  -p AZUREML_WORKSPACE_NAME ${{inputs.workspace_name}}
+  -p KEY_VAULT_NAME ${{inputs.key_vault_name}}
+  -p DATABRICKS_SECRET_SCOPE ${{inputs.databricks_secret_scope}}
+
+# Environment
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu22.04:latest
+  conda_file: conda-env.yml
+
+# Compute
+compute: azureml:cpu-cluster
+
+# Inputs (parameterized)
+inputs:
+  subscription_id:
+    type: string
+    description: "Azure subscription ID"
+  resource_group:
+    type: string
+    description: "Resource group name"
+  workspace_name:
+    type: string
+    description: "Azure ML workspace name"
+  key_vault_name:
+    type: string
+    description: "Azure Key Vault name"
+  databricks_secret_scope:
+    type: string
+    default: "azureml-kv-scope"
+    description: "Databricks secret scope name"
+
+# Identity
+identity:
+  type: managed
+
+# Resources
+resources:
+  instance_count: 1
+
+# Job Settings
+tags:
+  purpose: integration-testing
+  service: azureml-keyvault
+  environment: dev

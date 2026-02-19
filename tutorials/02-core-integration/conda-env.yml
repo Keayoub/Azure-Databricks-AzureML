@@ -1,0 +1,21 @@
+name: azureml-keyvault-integration
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip>=23.0
+  - pip:
+      # Azure SDKs
+      - azure-ai-ml>=1.12.0
+      - azure-identity>=1.15.0
+      - azure-keyvault-secrets>=4.7.0
+      - azure-mgmt-keyvault>=10.3.0
+      
+      # Notebook execution
+      - papermill>=2.5.0
+      - ipykernel>=6.29.0
+      - nbformat>=5.9.0
+      
+      # Additional dependencies
+      - requests>=2.31.0
