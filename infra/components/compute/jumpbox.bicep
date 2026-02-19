@@ -13,7 +13,7 @@ param tags object
 @description('VM size for jumpbox')
 param vmSize string = 'Standard_D2s_v3'
 
-var vmName = 'vm-win11-${environmentName}' // Changed name to force new VM creation with Windows 11
+var vmName = 'vm-win2022-${environmentName}' // Updated name to force new VM creation with Windows Server 2022
 var nicName = 'nic-${vmName}'
 var osDiskName = '${vmName}-osdisk'
 
@@ -55,19 +55,16 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
         enableAutomaticUpdates: true
         provisionVMAgent: true
         patchSettings: {
-          patchMode: 'AutomaticByPlatform'
-          assessmentMode: 'AutomaticByPlatform'
-          automaticByPlatformSettings: {
-            rebootSetting: 'IfRequired'
-          }
+          patchMode: 'AutomaticByOS'
+          assessmentMode: 'ImageDefault'
         }
       }
     }
     storageProfile: {
       imageReference: {
-        publisher: 'MicrosoftWindowsDesktop'
-        offer: 'Windows-11'
-        sku: 'win11-23h2-pro'
+        publisher: 'MicrosoftWindowsServer'
+        offer: 'WindowsServer'
+        sku: '2022-datacenter-azure-edition'
         version: 'latest'
       }
       osDisk: {

@@ -43,7 +43,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         count: nodeCount
         vmSize: 'Standard_D2s_v3'
         osType: 'Linux'
-        osSKU: 'AzureLinux'
+        osSKU: 'Ubuntu'
         maxCount: 10
         minCount: 1
         enableAutoScaling: true
@@ -58,7 +58,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         count: nodeCount
         vmSize: 'Standard_D4s_v5'
         osType: 'Linux'
-        osSKU: 'AzureLinux'
+        osSKU: 'Ubuntu'
         maxCount: 20
         minCount: 0
         enableAutoScaling: true
