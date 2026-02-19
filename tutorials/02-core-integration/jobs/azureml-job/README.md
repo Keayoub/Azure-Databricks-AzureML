@@ -2,6 +2,21 @@
 
 This guide explains how to run the `AzureML_KeyVault_Integration.ipynb` notebook as an Azure ML job using the `az ml` CLI.
 
+## 📁 Folder Structure
+
+```
+tutorials/02-core-integration/
+├── AzureML_KeyVault_Integration.ipynb  ← The notebook to execute
+└── jobs/
+    └── azureml-job/                     ← You are here
+        ├── azureml-job.yml              ← Job definition (references ../../notebook)
+        ├── conda-env.yml                ← Python environment
+        ├── run-azureml-job.ps1          ← Submission script
+        └── README.md                    ← This file
+```
+
+**Note**: The job runs from the parent directory (`../../`) to access the notebook.
+
 ## 📁 Files
 
 - **azureml-job.yml** - Azure ML job definition
@@ -14,6 +29,9 @@ This guide explains how to run the `AzureML_KeyVault_Integration.ipynb` notebook
 ### Windows (PowerShell)
 
 ```powershell
+# Run from the azureml-job folder
+cd tutorials/02-core-integration/jobs/azureml-job
+
 .\run-azureml-job.ps1 `
     -SubscriptionId "your-subscription-id" `
     -ResourceGroup "your-resource-group" `
@@ -24,6 +42,8 @@ This guide explains how to run the `AzureML_KeyVault_Integration.ipynb` notebook
 ### Linux/Mac (Bash)
 
 ```bash
+# Run from the azureml-job folder
+cd tutorials/02-core-integration/jobs/azureml-job
 chmod +x run-azureml-job.sh
 
 ./run-azureml-job.sh \
@@ -32,6 +52,8 @@ chmod +x run-azureml-job.sh
     --workspace-name "your-azureml-workspace" \
     --key-vault-name "your-keyvault-name"
 ```
+
+**Important**: The scripts run the job with `code: ../../` to access the notebook in the parent directory.
 
 ## 📋 Prerequisites
 
@@ -90,10 +112,10 @@ The script will create a compute cluster named `cpu-cluster` if it doesn't exist
 If you prefer to submit manually without the scripts:
 
 ```bash
-# 1. Navigate to directory
-cd tutorials/02-core-integration
+# 1. Navigate to the azureml-job folder
+cd tutorials/02-core-integration/jobs/azureml-job
 
-# 2. Submit job
+# 2. Submit job (the YAML uses code: ../../ to access the notebook)
 az ml job create \
     --file azureml-job.yml \
     --workspace-name your-workspace \
@@ -104,6 +126,8 @@ az ml job create \
     --set inputs.key_vault_name="xxx" \
     --set inputs.databricks_secret_scope="azureml-kv-scope"
 ```
+
+The output notebook will be saved at `jobs/azureml-job/output_AzureML_KeyVault_Integration.ipynb`.
 
 ## 📊 Monitor Job
 
@@ -132,7 +156,7 @@ az ml job download \
     --download-path ./outputs
 ```
 
-The executed notebook will be saved as `output_AzureML_KeyVault_Integration.ipynb`.
+The executed notebook will be in `outputs/jobs/azureml-job/output_AzureML_KeyVault_Integration.ipynb`.
 
 ## ⚙️ Customization
 

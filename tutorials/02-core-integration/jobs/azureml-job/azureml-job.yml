@@ -9,12 +9,12 @@ description: "Validates integration between Azure ML workspace and Azure Key Vau
 experiment_name: azureml-keyvault-integration
 
 # Code and Command
-code: ./
+code: ../../
 command: >-
   pip install papermill ipykernel &&
   papermill 
-  AzureML_KeyVault_Integration.ipynb 
-  output_AzureML_KeyVault_Integration.ipynb
+  AzureML_KeyVault_Integration_Test.ipynb 
+  jobs/azureml-job/output_AzureML_KeyVault_Integration_Test.ipynb
   -p AZURE_SUBSCRIPTION_ID ${{inputs.subscription_id}}
   -p AZURE_RESOURCE_GROUP ${{inputs.resource_group}}
   -p AZUREML_WORKSPACE_NAME ${{inputs.workspace_name}}

@@ -86,31 +86,56 @@ These notebooks demonstrate the foundational connectivity patterns between Azure
 
 ---
 
-### 5. **AzureML_KeyVault_Integration.ipynb**
-**Purpose:** Test and validate AzureML and Key Vault integration
+### 5. **Key Vault Integration Testing**
+
+Platform-specific notebooks for testing secure credential management:
+
+#### **AzureML_KeyVault_Integration_Test.ipynb**
+**Purpose:** Test Azure Machine Learning workspace integration with Key Vault using managed identity
 
 **What you'll learn:**
-- Authenticate to both AzureML and Key Vault using managed identities
-- Store and retrieve secrets in Key Vault using RBAC
-- Access Key Vault secrets via Databricks secret scopes
-- Use Key Vault secrets in AzureML training jobs
-- Compare RBAC vs Access Policies permission models
-- Implement security best practices for secret management
+- Authenticate to Key Vault from AzureML using DefaultAzureCredential
+- Store and retrieve secrets using RBAC permissions (Key Vault Secrets User/Officer)
+- Validate MLClient connectivity and workspace access
+- Test read/write operations with comprehensive error handling
+- Integrate Key Vault secrets with AzureML datastores
 
 **Use cases:**
-- Secure storage of API keys, connection strings, and credentials
-- Centralized secret management for AzureML workloads
-- Databricks notebooks that need secure credential access
-- Production deployments following least privilege principle
-- Audit and compliance requirements
+- Secure storage of API keys and connection strings for AzureML training jobs
+- Production deployments requiring centralized secret management
+- Audit and compliance requirements for secret access
 
-**Time to complete:** 30-45 minutes
+**Time to complete:** 20-30 minutes
 
-**Key Features:**
-- Tests both read and write permissions
-- Validates cross-service authentication
-- Demonstrates common integration patterns
-- Includes security best practices
+**Run as Job:** 📂 [Azure ML Job](jobs/azureml-job/) - Execute on Azure ML compute using Papermill
+
+---
+
+#### **Databricks_KeyVault_Integration_Test.ipynb**
+**Purpose:** Test Databricks workspace integration with Key Vault using secret scopes
+
+**What you'll learn:**
+- Access Key Vault secrets via Databricks secret scopes (Access Policies model)
+- List and retrieve secrets using dbutils.secrets
+- Validate secret scope configuration and permissions
+- Connect to Azure ML workspace using scope-backed credentials
+- Test direct Key Vault access and secret redaction
+
+**Use cases:**
+- Databricks notebooks requiring secure credential access
+- Secret management for Spark jobs and workflows
+- Cross-service authentication (Databricks → Azure ML, Key Vault)
+
+**Time to complete:** 20-30 minutes
+
+**Run as Job:** 📂 [Databricks Job](jobs/databricks-job/) - Execute on Databricks clusters with secret scope parameters
+
+---
+
+**Comparison:**
+- **Azure ML**: RBAC-based access, managed identity authentication, direct Key Vault SDK
+- **Databricks**: Access Policies, secret scope abstraction, dbutils.secrets API
+- **Setup Guide:** 📚 [Job Setup Guide](jobs/) - Platform comparison and quick start
 
 ---
 
