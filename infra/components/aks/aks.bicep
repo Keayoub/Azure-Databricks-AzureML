@@ -51,7 +51,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         mode: 'System'
         vnetSubnetID: aksSubnetId
-        podSubnetID: aksSubnetId
         nodeTaints: []
       }
       {
@@ -67,7 +66,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         type: 'VirtualMachineScaleSets'
         mode: 'User'
         vnetSubnetID: aksSubnetId
-        podSubnetID: aksSubnetId
         nodeTaints: [
           'workload=inference:NoSchedule'
         ]
@@ -125,5 +123,4 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
 // ========== Outputs ==========
 output aksClusterName string = aksCluster.name
 output aksClusterResourceId string = aksCluster.id
-output fqdn string = aksCluster.properties.fqdn
 output privateFqdn string = aksCluster.properties.privateFQDN

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "674971930202468489"
+      "templateHash": "3395995259747675733"
     }
   },
   "parameters": {
@@ -2889,7 +2889,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "9841822750461820574"
+              "templateHash": "1577405957163420861"
             }
           },
           "parameters": {
@@ -2957,7 +2957,6 @@
                     "type": "VirtualMachineScaleSets",
                     "mode": "System",
                     "vnetSubnetID": "[parameters('aksSubnetId')]",
-                    "podSubnetID": "[parameters('aksSubnetId')]",
                     "nodeTaints": []
                   },
                   {
@@ -2973,7 +2972,6 @@
                     "type": "VirtualMachineScaleSets",
                     "mode": "User",
                     "vnetSubnetID": "[parameters('aksSubnetId')]",
-                    "podSubnetID": "[parameters('aksSubnetId')]",
                     "nodeTaints": [
                       "workload=inference:NoSchedule"
                     ]
@@ -3036,10 +3034,6 @@
             "aksClusterResourceId": {
               "type": "string",
               "value": "[resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName'))]"
-            },
-            "fqdn": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('clusterName')), '2024-02-01').fqdn]"
             },
             "privateFqdn": {
               "type": "string",
