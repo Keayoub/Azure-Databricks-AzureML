@@ -1,0 +1,13 @@
+$schema: https://learn.microsoft.com/en-us/azure/machine-learning/reference-yaml-deployment-online?view=azureml-api-2
+name: blue
+endpoint_name: my-aks-endpoint
+model: azureml:<MODEL_NAME>:<VERSION>
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu@latest
+code_configuration:
+  code: .
+  scoring_script: score.py
+
+instance_type: <K8S_INSTANCE_TYPE>
+instance_count: 1
+
+compute: azureml:<K8S_COMPUTE_NAME>

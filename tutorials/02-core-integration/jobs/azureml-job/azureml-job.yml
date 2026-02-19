@@ -15,6 +15,7 @@ command: >-
   papermill 
   AzureML_KeyVault_Integration_Test.ipynb 
   jobs/azureml-job/output_AzureML_KeyVault_Integration_Test.ipynb
+  -k python3
   -p AZURE_SUBSCRIPTION_ID ${{inputs.subscription_id}}
   -p AZURE_RESOURCE_GROUP ${{inputs.resource_group}}
   -p AZUREML_WORKSPACE_NAME ${{inputs.workspace_name}}

@@ -21,20 +21,19 @@ param(
     [switch]$Update
 )
 
-Write-Host "🚀 Creating Databricks Job for AzureML KeyVault Integration Test" -ForegroundColor Cyan
-Write-Host "=" * 80
+Write-Host "`nCreating Databricks Job for AzureML KeyVault Integration Test"
 
 # Get token if not provided
 if (-not $Token) {
-    Write-Host "ℹ️  Token not provided. Checking environment variables..." -ForegroundColor Yellow
+    Write-Host "Token not provided. Checking environment variables..."
     $Token = $env:DATABRICKS_TOKEN
     
     if (-not $Token) {
-        Write-Host "ℹ️  Checking Azure CLI for token..." -ForegroundColor Yellow
+        Write-Host "Checking Azure CLI for token..."
         try {
             $Token = az account get-access-token --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv
         } catch {
-            Write-Error "❌ Could not get token. Set DATABRICKS_TOKEN environment variable or provide -Token parameter"
+            Write-Error "Could not get token. Set DATABRICKS_TOKEN environment variable or provide -Token parameter"
             exit 1
         }
     }
@@ -42,7 +41,7 @@ if (-not $Token) {
 
 # Validate workspace URL
 $WorkspaceUrl = $WorkspaceUrl.TrimEnd('/')
-Write-Host "✅ Workspace URL: $WorkspaceUrl" -ForegroundColor Green
+Write-Host "Workspace URL: $WorkspaceUrl"
 
 # Load job definition
 $jobDefinition = Get-Content "job-definition.json" -Raw | ConvertFrom-Json
@@ -53,7 +52,7 @@ $jobDefinition.tasks[0].notebook_task.notebook_path = $NotebookPath
 $jobDefinition.tasks[0].notebook_task.base_parameters.DATABRICKS_SECRET_SCOPE = $SecretScope
 
 # Check if job already exists
-Write-Host "`n🔍 Checking if job already exists..." -ForegroundColor Cyan
+Write-Host "`nChecking if job already exists..."
 
 $headers = @{
     "Authorization" = "Bearer $Token"
@@ -65,10 +64,10 @@ try {
     $existingJob = $listResponse.jobs | Where-Object { $_.settings.name -eq $JobName }
     
     if ($existingJob) {
-        Write-Host "✅ Found existing job: $($existingJob.job_id)" -ForegroundColor Green
+        Write-Host "Found existing job: $($existingJob.job_id)"
         
         if ($Update) {
-            Write-Host "🔄 Updating existing job..." -ForegroundColor Yellow
+            Write-Host "Updating existing job..."
             
             $updateBody = @{
                 job_id = $existingJob.job_id
@@ -77,60 +76,49 @@ try {
             
             $updateResponse = Invoke-RestMethod -Uri "$WorkspaceUrl/api/2.1/jobs/update" -Method Post -Headers $headers -Body $updateBody
             
-            Write-Host "✅ Job updated successfully!" -ForegroundColor Green
+            Write-Host "Job updated successfully"
             $jobId = $existingJob.job_id
         } else {
-            Write-Host "⚠️  Job already exists. Use -Update to update it." -ForegroundColor Yellow
+            Write-Host "Job already exists. Use -Update to update it."
             $jobId = $existingJob.job_id
         }
     } else {
-        Write-Host "ℹ️  Job not found. Creating new job..." -ForegroundColor Yellow
+        Write-Host "Job not found. Creating new job..."
         
         $createBody = $jobDefinition | ConvertTo-Json -Depth 10
         $createResponse = Invoke-RestMethod -Uri "$WorkspaceUrl/api/2.1/jobs/create" -Method Post -Headers $headers -Body $createBody
         
         $jobId = $createResponse.job_id
-        Write-Host "✅ Job created successfully!" -ForegroundColor Green
+        Write-Host "Job created successfully"
     }
     
     # Get job details
     $jobDetails = Invoke-RestMethod -Uri "$WorkspaceUrl/api/2.1/jobs/get?job_id=$jobId" -Method Get -Headers $headers
     
-    Write-Host "`n" + ("=" * 80)
-    Write-Host "JOB DETAILS" -ForegroundColor Cyan
-    Write-Host ("=" * 80)
-    Write-Host "Job Name:       $($jobDetails.settings.name)" -ForegroundColor White
-    Write-Host "Job ID:         $jobId" -ForegroundColor White
-    Write-Host "Notebook Path:  $NotebookPath" -ForegroundColor White
-    Write-Host "Cluster Type:   Single Node (Standard_DS3_v2)" -ForegroundColor White
-    Write-Host "Schedule:       Every Monday at 09:00 UTC (PAUSED)" -ForegroundColor Yellow
-    Write-Host "Secret Scope:   $SecretScope" -ForegroundColor White
-    Write-Host ("=" * 80)
-    
-    Write-Host "`n🌐 Open in Databricks:" -ForegroundColor Cyan
-    Write-Host "   $WorkspaceUrl/jobs/$jobId" -ForegroundColor Blue
-    
-    Write-Host "`n▶️  Run job now:" -ForegroundColor Cyan
-    Write-Host "   Invoke-RestMethod -Uri '$WorkspaceUrl/api/2.1/jobs/run-now' -Method Post -Headers @{'Authorization'='Bearer `$Token'} -Body (ConvertTo-Json @{job_id=$jobId})" -ForegroundColor Gray
-    
-    Write-Host "`n📊 List job runs:" -ForegroundColor Cyan
-    Write-Host "   Invoke-RestMethod -Uri '$WorkspaceUrl/api/2.1/jobs/runs/list?job_id=$jobId' -Method Get -Headers @{'Authorization'='Bearer `$Token'}" -ForegroundColor Gray
+    Write-Host "`nJOB DETAILS"
+    Write-Host "Job Name:       $($jobDetails.settings.name)"
+    Write-Host "Job ID:         $jobId"
+    Write-Host "Notebook Path:  $NotebookPath"
+    Write-Host "Cluster Type:   Single Node (Standard_DS3_v2)"
+    Write-Host "Schedule:       Every Monday at 09:00 UTC (PAUSED)"
+    Write-Host "Secret Scope:   $SecretScope"
+    Write-Host "`nOpen in Databricks: $WorkspaceUrl/jobs/$jobId"
     
     # Ask if user wants to run now
     $runNow = Read-Host "`nWould you like to run the job now? (y/n)"
     if ($runNow -eq 'y' -or $runNow -eq 'Y') {
-        Write-Host "`n▶️  Starting job run..." -ForegroundColor Cyan
+        Write-Host "`nStarting job run..."
         $runResponse = Invoke-RestMethod -Uri "$WorkspaceUrl/api/2.1/jobs/run-now" -Method Post -Headers $headers -Body (ConvertTo-Json @{job_id=$jobId})
         
-        Write-Host "✅ Job run started!" -ForegroundColor Green
-        Write-Host "   Run ID: $($runResponse.run_id)" -ForegroundColor White
-        Write-Host "   Monitor: $WorkspaceUrl/jobs/$jobId/runs/$($runResponse.run_id)" -ForegroundColor Blue
+        Write-Host "Job run started"
+        Write-Host "Run ID: $($runResponse.run_id)"
+        Write-Host "Monitor: $WorkspaceUrl/jobs/$jobId/runs/$($runResponse.run_id)"
     }
     
 } catch {
-    Write-Error "❌ Failed to create/update job: $_"
+    Write-Error "Failed to create/update job: $_"
     Write-Error $_.Exception.Response
     exit 1
 }
 
-Write-Host "`n✅ Done!" -ForegroundColor Green
+Write-Host "`nDone"
