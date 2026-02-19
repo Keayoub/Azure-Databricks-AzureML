@@ -43,10 +43,6 @@ inputs:
   key_vault_name:
     type: string
     description: "Azure Key Vault name"
-  databricks_secret_scope:
-    type: string
-    default: "azureml-kv-scope"
-    description: "Databricks secret scope name"
 
 # Identity
 identity:

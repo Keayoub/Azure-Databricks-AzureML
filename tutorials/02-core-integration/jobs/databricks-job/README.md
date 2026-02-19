@@ -1,26 +1,66 @@
-# Running AzureML_KeyVault_Integration Notebook as Databricks Job
+# Databricks Job Configurations
 
-This guide explains how to create and run the `AzureML_KeyVault_Integration.ipynb` notebook as a Databricks job using the Databricks Jobs API.
+This folder contains configurations for running Databricks notebooks as jobs.
+
+## 🎯 Choose Your Setup
+
+### Option 1: Single Notebook Job (This Guide)
+Run **one specific notebook** (e.g., `Databricks_KeyVault_Integration_Test.ipynb`)
+
+**✅ Use this for:**
+- Testing individual integration patterns
+- Focused validation of specific features
+- Quick execution (minutes)
+
+### Option 2: Complete Workflow (17 Notebooks)
+Run **all Databricks notebooks** in logical order
+
+**✅ Use this for:**
+- Comprehensive end-to-end testing
+- CI/CD validation
+- Full integration validation
+- Expected duration: 2-4 hours
+
+📚 **[Complete Workflow Guide](COMPLETE-WORKFLOW.md)** ← Click for multi-task workflow setup
+
+---
+
+## Single Notebook Job Setup
+
+This guide explains how to create and run the `Databricks_KeyVault_Integration_Test.ipynb` notebook as a Databricks job using the Databricks Jobs API.
 
 ## 📁 Folder Structure
 
 ```
 tutorials/02-core-integration/
-├── AzureML_KeyVault_Integration.ipynb  ← The notebook to execute
+├── Databricks_KeyVault_Integration_Test.ipynb  ← Single notebook
+├── AzureML_KeyVault_Integration_Test.ipynb     ← Azure ML notebook
 └── jobs/
-    └── databricks-job/                  ← You are here
-        ├── job-definition.json          ← Job definition
-        ├── create-databricks-job.ps1    ← Creation script
-        └── README.md                    ← This file
+    └── databricks-job/                          ← You are here
+        ├── job-definition.json                  ← Single notebook job
+        ├── complete-workflow-job.json           ← 17-task workflow
+        ├── create-databricks-job.ps1            ← Single job script
+        ├── create-databricks-job.sh             ← Single job script
+        ├── create-complete-workflow.ps1         ← Workflow script
+        ├── create-complete-workflow.sh          ← Workflow script
+        ├── README.md                            ← This file
+        └── COMPLETE-WORKFLOW.md                 ← Workflow documentation
 ```
 
-**Note**: Upload the notebook to Databricks workspace at `/Workspace/tutorials/02-core-integration/AzureML_KeyVault_Integration`
+**Note**: Upload notebooks to Databricks workspace at `/Workspace/tutorials/02-core-integration/`
 
 ## 📁 Files
 
-- **job-definition.json** - Databricks job configuration
-- **create-databricks-job.ps1** - PowerShell script to create/update job (Windows)
-- **create-databricks-job.sh** - Bash script to create/update job (Linux/Mac)
+### Single Notebook Job
+- **job-definition.json** - Single notebook job configuration
+- **create-databricks-job.ps1** - PowerShell script to create/update single job
+- **create-databricks-job.sh** - Bash script to create/update single job
+
+### Complete Workflow (17 Notebooks)
+- **complete-workflow-job.json** - Multi-task workflow configuration
+- **create-complete-workflow.ps1** - PowerShell script to create/update workflow
+- **create-complete-workflow.sh** - Bash script to create/update workflow
+- **COMPLETE-WORKFLOW.md** - Complete workflow documentation
 
 ## 🚀 Quick Start
 
@@ -46,20 +86,20 @@ chmod +x create-databricks-job.sh
 
 ### 1. Upload Notebook to Databricks
 
-Upload `../../AzureML_KeyVault_Integration.ipynb` to your Databricks workspace:
+Upload `../../Databricks_KeyVault_Integration_Test.ipynb` to your Databricks workspace:
 
 ```bash
 # Using Databricks CLI (from the jobs/databricks-job folder)
 databricks workspace import \
-    ../../AzureML_KeyVault_Integration.ipynb \
-    /Workspace/tutorials/02-core-integration/AzureML_KeyVault_Integration \
+    ../../Databricks_KeyVault_Integration_Test.ipynb \
+    /Workspace/tutorials/02-core-integration/Databricks_KeyVault_Integration_Test \
     --language PYTHON \
     --format JUPYTER
 ```
 
 Or use the Databricks UI: **Workspace** → **Import** → Select file
 
-**Target Path**: `/Workspace/tutorials/02-core-integration/AzureML_KeyVault_Integration`
+**Target Path**: `/Workspace/tutorials/02-core-integration/Databricks_KeyVault_Integration_Test`
 
 ### 2. Create Secret Scope
 

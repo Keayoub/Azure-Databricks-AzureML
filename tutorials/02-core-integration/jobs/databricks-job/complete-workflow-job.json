@@ -1,0 +1,311 @@
+{
+  "name": "Complete-Databricks-AzureML-Workflow",
+  "description": "Comprehensive workflow executing all Databricks notebooks in logical order",
+  "email_notifications": {
+    "on_start": [],
+    "on_success": [],
+    "on_failure": []
+  },
+  "webhook_notifications": {},
+  "timeout_seconds": 0,
+  "max_concurrent_runs": 1,
+  "format": "MULTI_TASK",
+  "tasks": [
+    {
+      "task_key": "quickstart_integration_guide",
+      "description": "Introduction and integration overview",
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/01-quickstart/00_Integration_Guide",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "quickstart_test_models",
+      "description": "Quick test of Azure ML models from Databricks",
+      "depends_on": [
+        {
+          "task_key": "quickstart_integration_guide"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/01-quickstart/QUICKSTART_Test_AzureML_Models",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "core_complete_integration",
+      "description": "Complete reference for Databricks-AzureML integration",
+      "depends_on": [
+        {
+          "task_key": "quickstart_test_models"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/02-core-integration/Complete_Databricks_AzureML_Integration",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "subscription_id": "{{secrets/azureml-kv-scope/subscription-id}}",
+          "resource_group": "{{secrets/azureml-kv-scope/resource-group}}",
+          "workspace_name": "{{secrets/azureml-kv-scope/workspace-name}}"
+        }
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "core_databricks_to_azureml",
+      "description": "Call AzureML endpoints from Databricks",
+      "depends_on": [
+        {
+          "task_key": "core_complete_integration"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/02-core-integration/Databricks_to_AzureML_Connection",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "subscription_id": "{{secrets/azureml-kv-scope/subscription-id}}",
+          "resource_group": "{{secrets/azureml-kv-scope/resource-group}}",
+          "workspace_name": "{{secrets/azureml-kv-scope/workspace-name}}",
+          "endpoint_name": "my-endpoint"
+        }
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "core_keyvault_integration",
+      "description": "Test Key Vault integration from Databricks",
+      "depends_on": [
+        {
+          "task_key": "core_databricks_to_azureml"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/02-core-integration/Databricks_KeyVault_Integration_Test",
+        "source": "WORKSPACE",
+        "base_parameters": {
+          "subscription_id": "{{secrets/azureml-kv-scope/subscription-id}}",
+          "resource_group": "{{secrets/azureml-kv-scope/resource-group}}",
+          "workspace_name": "{{secrets/azureml-kv-scope/workspace-name}}",
+          "key_vault_name": "{{secrets/azureml-kv-scope/key-vault-name}}",
+          "databricks_secret_scope": "azureml-kv-scope"
+        }
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "ml_feature_engineering",
+      "description": "Feature engineering and data preparation",
+      "depends_on": [
+        {
+          "task_key": "core_keyvault_integration"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/03-ml-workflows/01_Feature_Engineering_Preparation",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "ml_model_training",
+      "description": "Model training pipeline",
+      "depends_on": [
+        {
+          "task_key": "ml_feature_engineering"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/03-ml-workflows/02_Model_Training_Pipeline",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "ml_batch_prediction",
+      "description": "Batch prediction and scoring",
+      "depends_on": [
+        {
+          "task_key": "ml_model_training"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/03-ml-workflows/03_Batch_Prediction_Scoring",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "ml_realtime_inference",
+      "description": "Real-time inference patterns",
+      "depends_on": [
+        {
+          "task_key": "ml_batch_prediction"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/03-ml-workflows/05_Real_Time_Inference",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "ml_testing_models",
+      "description": "Testing AzureML models",
+      "depends_on": [
+        {
+          "task_key": "ml_realtime_inference"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/03-ml-workflows/07_Testing_AzureML_Models",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "mlops_orchestration",
+      "description": "MLOps orchestration patterns",
+      "depends_on": [
+        {
+          "task_key": "ml_testing_models"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/04-mlops-orchestration/04_MLOps_Orchestration",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "mlops_powershell",
+      "description": "PowerShell orchestration examples",
+      "depends_on": [
+        {
+          "task_key": "mlops_orchestration"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/04-mlops-orchestration/09_PowerShell_Orchestration",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "mlops_integration_guide",
+      "description": "Comprehensive Databricks-AzureML integration guide",
+      "depends_on": [
+        {
+          "task_key": "mlops_powershell"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/04-mlops-orchestration/10_DBX_AML_Integration_Guide",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "unity_catalog_integration",
+      "description": "Unity Catalog integration patterns",
+      "depends_on": [
+        {
+          "task_key": "mlops_integration_guide"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/05-unity-catalog/06_Unity_Catalog_Integration",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "unity_deploy_endpoints",
+      "description": "Deploy model to three endpoints",
+      "depends_on": [
+        {
+          "task_key": "unity_catalog_integration"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/05-unity-catalog/Deploy_Model_to_Three_Endpoints",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "unity_track_deploy",
+      "description": "Track with Databricks, deploy to AzureML",
+      "depends_on": [
+        {
+          "task_key": "unity_deploy_endpoints"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/05-unity-catalog/track_with_databricks_deploy_aml",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    },
+    {
+      "task_key": "enterprise_reference",
+      "description": "Enterprise reference integration patterns",
+      "depends_on": [
+        {
+          "task_key": "unity_track_deploy"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "/Workspace/tutorials/06-enterprise-reference/08_Enterprise_Reference_Integration",
+        "source": "WORKSPACE"
+      },
+      "existing_cluster_id": "{{CLUSTER_ID}}",
+      "timeout_seconds": 0,
+      "email_notifications": {}
+    }
+  ],
+  "schedule": {
+    "quartz_cron_expression": "0 0 2 * * ?",
+    "timezone_id": "America/New_York",
+    "pause_status": "PAUSED"
+  },
+  "tags": {
+    "purpose": "comprehensive-testing",
+    "service": "databricks-azureml",
+    "environment": "dev",
+    "workflow": "complete"
+  }
+}
