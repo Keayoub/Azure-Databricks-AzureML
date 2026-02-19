@@ -19,7 +19,6 @@ command: >-
   -p AZURE_RESOURCE_GROUP ${{inputs.resource_group}}
   -p AZUREML_WORKSPACE_NAME ${{inputs.workspace_name}}
   -p KEY_VAULT_NAME ${{inputs.key_vault_name}}
-  -p DATABRICKS_SECRET_SCOPE ${{inputs.databricks_secret_scope}}
 
 # Environment
 environment:
