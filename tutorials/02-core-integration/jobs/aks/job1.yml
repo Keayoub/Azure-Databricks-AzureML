@@ -1,0 +1,13 @@
+
+$schema: https://learn.microsoft.com/en-us/azure/machine-learning/reference-yaml-job-command?view=azureml-api-2
+type: command
+experiment_name: aks-training
+
+code: .
+
+command: >-
+  python train.py --epochs 5
+
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38@latest
+
+compute: azureml:<K8S_COMPUTE_NAME>

@@ -4,14 +4,6 @@
 
 set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
 # Default values
 DATABRICKS_SECRET_SCOPE="azureml-kv-scope"
 COMPUTE_CLUSTER="cpu-cluster"
@@ -44,50 +36,53 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            echo -e "${RED}Unknown parameter: $1${NC}"
+            echo "Unknown parameter: $1"
             exit 1
             ;;
     esac
 done
 
-# Validate required parameters
+# Validate parameters
 if [[ -z "$SUBSCRIPTION_ID" || -z "$RESOURCE_GROUP" || -z "$WORKSPACE_NAME" || -z "$KEY_VAULT_NAME" ]]; then
-    echo -e "${RED}Error: Missing required parameters${NC}"
+    echo "Error: Missing required parameters"
     echo "Usage: $0 --subscription-id <id> --resource-group <rg> --workspace-name <name> --key-vault-name <name>"
     exit 1
 fi
 
-echo -e "${CYAN}🚀 Submitting AzureML KeyVault Integration Test Job${NC}"
-echo "================================================================================"
+echo ""
+echo "Submitting Azure ML job..."
+echo "Subscription: $SUBSCRIPTION_ID"
+echo "Workspace: $WORKSPACE_NAME"
+echo "Compute: $COMPUTE_CLUSTER"
 
-# Validate Azure CLI is installed
+# Validate Azure CLI
 if ! command -v az &> /dev/null; then
-    echo -e "${RED}❌ Azure CLI not found. Install from: https://aka.ms/installazurecliwindows${NC}"
+    echo "Error: Azure CLI not found"
     exit 1
 fi
 
 AZ_VERSION=$(az version --query '\"azure-cli\"' -o tsv)
-echo -e "${GREEN}✅ Azure CLI version: $AZ_VERSION${NC}"
+echo "Azure CLI version: $AZ_VERSION"
 
-# Validate Azure ML extension
+# Validate ML extension
 if ! az extension show --name ml &> /dev/null; then
-    echo -e "${YELLOW}⚠️  Azure ML extension not found. Installing...${NC}"
+    echo "Installing Azure ML extension..."
     az extension add --name ml --yes
 fi
 
 ML_EXT_VERSION=$(az extension show --name ml --query version -o tsv)
-echo -e "${GREEN}✅ Azure ML extension version: $ML_EXT_VERSION${NC}"
+echo "ML extension version: $ML_EXT_VERSION"
 
-# Set Azure subscription
-echo -e "\n${CYAN}📍 Setting subscription to: $SUBSCRIPTION_ID${NC}"
+# Set subscription
+echo ""
+echo "Setting subscription..."
 az account set --subscription "$SUBSCRIPTION_ID"
 
-# Verify compute cluster exists
-echo -e "\n${CYAN}🔍 Checking compute cluster: $COMPUTE_CLUSTER${NC}"
+# Check compute cluster
+echo ""
+echo "Checking compute cluster..."
 if ! az ml compute show --name "$COMPUTE_CLUSTER" --workspace-name "$WORKSPACE_NAME" --resource-group "$RESOURCE_GROUP" &> /dev/null; then
-    echo -e "${YELLOW}⚠️  Compute cluster '$COMPUTE_CLUSTER' not found. Creating...${NC}"
-    
-    # Create CPU compute cluster
+    echo "Creating compute cluster..."
     az ml compute create \
         --name "$COMPUTE_CLUSTER" \
         --type amlcompute \
@@ -97,21 +92,14 @@ if ! az ml compute show --name "$COMPUTE_CLUSTER" --workspace-name "$WORKSPACE_N
         --idle-time-before-scale-down 120 \
         --workspace-name "$WORKSPACE_NAME" \
         --resource-group "$RESOURCE_GROUP"
-    
-    echo -e "${GREEN}✅ Compute cluster created${NC}"
+    echo "Compute cluster created"
 else
-    echo -e "${GREEN}✅ Compute cluster exists${NC}"
+    echo "Compute cluster exists"
 fi
 
-# Update job YAML with compute cluster name
-sed -i.bak "s/compute: azureml:cpu-cluster/compute: azureml:$COMPUTE_CLUSTER/g" azureml-job.yml
-
 # Submit job
-echo -e "\n${CYAN}🎯 Submitting job to Azure ML...${NC}"
-echo "   Workspace: $WORKSPACE_NAME"
-echo "   Resource Group: $RESOURCE_GROUP"
-echo "   Compute: $COMPUTE_CLUSTER"
 echo ""
+echo "Submitting job..."
 
 JOB_OUTPUT=$(az ml job create \
     --file azureml-job.yml \
@@ -125,36 +113,21 @@ JOB_OUTPUT=$(az ml job create \
     --output json)
 
 if [ $? -eq 0 ]; then
-    JOB_NAME=$(echo "$JOB_OUTPUT" | jq -r '.name')
-    JOB_ID=$(echo "$JOB_OUTPUT" | jq -r '.id')
-    JOB_STATUS=$(echo "$JOB_OUTPUT" | jq -r '.status')
-    STUDIO_URL=$(echo "$JOB_OUTPUT" | jq -r '.services.Studio.endpoint')
+    JOB_NAME=$(echo "$JOB_OUTPUT" | grep -o '"name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    STUDIO_URL=$(echo "$JOB_OUTPUT" | grep -o '"endpoint"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"endpoint"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     
-    echo -e "${GREEN}✅ Job submitted successfully!${NC}"
     echo ""
-    echo -e "${CYAN}Job Details:${NC}"
-    echo -e "  Job Name: ${NC}$JOB_NAME"
-    echo -e "  Job ID: ${NC}$JOB_ID"
-    echo -e "  Status: ${YELLOW}$JOB_STATUS${NC}"
-    echo -e "  Studio URL: ${BLUE}$STUDIO_URL${NC}"
-    echo ""
-    echo -e "${CYAN}🌐 Open in Azure ML Studio:${NC}"
-    echo -e "   ${BLUE}$STUDIO_URL${NC}"
-    echo ""
-    echo -e "${CYAN}📊 Monitor job status:${NC}"
-    echo -e "   az ml job show --name $JOB_NAME --workspace-name $WORKSPACE_NAME --resource-group $RESOURCE_GROUP"
-    echo ""
-    echo -e "${CYAN}📥 Stream job logs:${NC}"
-    echo -e "   az ml job stream --name $JOB_NAME --workspace-name $WORKSPACE_NAME --resource-group $RESOURCE_GROUP"
+    echo "Job submitted successfully"
+    echo "Job Name: $JOB_NAME"
+    echo "Studio URL: $STUDIO_URL"
     
-    # Ask if user wants to stream logs
-    read -p "$(echo -e ${CYAN}Would you like to stream the job logs now? \(y/n\): ${NC})" -n 1 -r
+    read -p "Stream job logs? (y/n): " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "\n${CYAN}📡 Streaming job logs...${NC}"
+        echo "Streaming logs..."
         az ml job stream --name "$JOB_NAME" --workspace-name "$WORKSPACE_NAME" --resource-group "$RESOURCE_GROUP"
     fi
 else
-    echo -e "${RED}❌ Job submission failed${NC}"
+    echo "Error: Job submission failed"
     exit 1
 fi

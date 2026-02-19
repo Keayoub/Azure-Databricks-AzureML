@@ -21,39 +21,38 @@ param(
     [string]$ComputeCluster = "cpu-cluster"
 )
 
-Write-Host "🚀 Submitting AzureML KeyVault Integration Test Job" -ForegroundColor Cyan
-Write-Host "=" * 80
+Write-Host "`nSubmitting Azure ML job..."
+Write-Host "Subscription: $SubscriptionId"
+Write-Host "Workspace: $WorkspaceName"
+Write-Host "Compute: $ComputeCluster"
 
-# Validate Azure CLI is installed
+# Validate Azure CLI
 try {
     $azVersion = az version --output json | ConvertFrom-Json
-    Write-Host "✅ Azure CLI version: $($azVersion.'azure-cli')" -ForegroundColor Green
+    Write-Host "Azure CLI version: $($azVersion.'azure-cli')"
 } catch {
-    Write-Error "❌ Azure CLI not found. Install from: https://aka.ms/installazurecliwindows"
+    Write-Error "Azure CLI not found. Install from: https://aka.ms/installazurecliwindows"
     exit 1
 }
 
-# Validate Azure ML extension
+# Validate ML extension
 try {
     $mlExtension = az extension show --name ml --output json 2>$null | ConvertFrom-Json
-    Write-Host "✅ Azure ML extension version: $($mlExtension.version)" -ForegroundColor Green
+    Write-Host "ML extension version: $($mlExtension.version)"
 } catch {
-    Write-Host "⚠️  Azure ML extension not found. Installing..." -ForegroundColor Yellow
+    Write-Host "Installing Azure ML extension..."
     az extension add --name ml --yes
 }
 
-# Set Azure subscription
-Write-Host "`n📍 Setting subscription to: $SubscriptionId" -ForegroundColor Cyan
+# Set subscription
 az account set --subscription $SubscriptionId
 
-# Verify compute cluster exists
-Write-Host "`n🔍 Checking compute cluster: $ComputeCluster" -ForegroundColor Cyan
+# Check compute cluster
+Write-Host "`nChecking compute cluster..."
 $computeExists = az ml compute show --name $ComputeCluster --workspace-name $WorkspaceName --resource-group $ResourceGroup 2>$null
 
 if (-not $computeExists) {
-    Write-Host "⚠️  Compute cluster '$ComputeCluster' not found. Creating..." -ForegroundColor Yellow
-    
-    # Create CPU compute cluster
+    Write-Host "Creating compute cluster..."
     az ml compute create `
         --name $ComputeCluster `
         --type amlcompute `
@@ -63,23 +62,13 @@ if (-not $computeExists) {
         --idle-time-before-scale-down 120 `
         --workspace-name $WorkspaceName `
         --resource-group $ResourceGroup
-    
-    Write-Host "✅ Compute cluster created" -ForegroundColor Green
+    Write-Host "Compute cluster created"
 } else {
-    Write-Host "✅ Compute cluster exists" -ForegroundColor Green
+    Write-Host "Compute cluster exists"
 }
 
-# Update job YAML with compute cluster name
-$jobYaml = Get-Content "azureml-job.yml" -Raw
-$jobYaml = $jobYaml -replace "compute: azureml:cpu-cluster", "compute: azureml:$ComputeCluster"
-$jobYaml | Set-Content "azureml-job.yml"
-
 # Submit job
-Write-Host "`n🎯 Submitting job to Azure ML..." -ForegroundColor Cyan
-Write-Host "   Workspace: $WorkspaceName"
-Write-Host "   Resource Group: $ResourceGroup"
-Write-Host "   Compute: $ComputeCluster"
-Write-Host ""
+Write-Host "`nSubmitting job..."
 
 $job = az ml job create `
     --file azureml-job.yml `
@@ -93,30 +82,18 @@ $job = az ml job create `
     --output json | ConvertFrom-Json
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Job submitted successfully!" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Job Details:" -ForegroundColor Cyan
-    Write-Host "  Job Name: $($job.name)" -ForegroundColor White
-    Write-Host "  Job ID: $($job.id)" -ForegroundColor White
-    Write-Host "  Status: $($job.status)" -ForegroundColor Yellow
-    Write-Host "  Studio URL: $($job.services.Studio.endpoint)" -ForegroundColor Blue
-    Write-Host ""
-    Write-Host "🌐 Open in Azure ML Studio:" -ForegroundColor Cyan
-    Write-Host "   $($job.services.Studio.endpoint)" -ForegroundColor Blue
-    Write-Host ""
-    Write-Host "📊 Monitor job status:" -ForegroundColor Cyan
-    Write-Host "   az ml job show --name $($job.name) --workspace-name $WorkspaceName --resource-group $ResourceGroup" -ForegroundColor Gray
-    Write-Host ""
-    Write-Host "📥 Stream job logs:" -ForegroundColor Cyan
-    Write-Host "   az ml job stream --name $($job.name) --workspace-name $WorkspaceName --resource-group $ResourceGroup" -ForegroundColor Gray
+    Write-Host "`nJob submitted successfully"
+    Write-Host "Job Name: $($job.name)"
+    Write-Host "Job ID: $($job.id)"
+    Write-Host "Status: $($job.status)"
+    Write-Host "Studio URL: $($job.services.Studio.endpoint)"
     
-    # Ask if user wants to stream logs
-    $stream = Read-Host "`nWould you like to stream the job logs now? (y/n)"
+    $stream = Read-Host "`nStream job logs? (y/n)"
     if ($stream -eq 'y' -or $stream -eq 'Y') {
-        Write-Host "`n📡 Streaming job logs..." -ForegroundColor Cyan
+        Write-Host "Streaming logs..."
         az ml job stream --name $job.name --workspace-name $WorkspaceName --resource-group $ResourceGroup
     }
 } else {
-    Write-Error "❌ Job submission failed"
+    Write-Error "Job submission failed"
     exit 1
 }
