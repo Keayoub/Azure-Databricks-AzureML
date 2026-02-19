@@ -13,10 +13,6 @@ param tags object
 @description('VM size for jumpbox')
 param vmSize string = 'Standard_D2s_v3'
 
-@description('Windows Server version')
-@allowed(['2019-Datacenter', '2022-Datacenter', '2022-datacenter-azure-edition'])
-param windowsOSVersion string = '2022-datacenter-azure-edition'
-
 var vmName = 'vm-jmp-${environmentName}' // Shortened to fit 15 char Windows limit
 var nicName = 'nic-${vmName}'
 var osDiskName = '${vmName}-osdisk'
@@ -69,9 +65,9 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-03-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'MicrosoftWindowsServer'
-        offer: 'WindowsServer'
-        sku: windowsOSVersion
+        publisher: 'MicrosoftWindowsDesktop'
+        offer: 'Windows-11'
+        sku: 'win11-23h2-pro'
         version: 'latest'
       }
       osDisk: {

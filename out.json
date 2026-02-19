@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.40.2.10011",
-      "templateHash": "3395995259747675733"
+      "templateHash": "7928592865031703637"
     }
   },
   "parameters": {
@@ -2649,7 +2649,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.40.2.10011",
-              "templateHash": "351581291121140030"
+              "templateHash": "8533344791012509641"
             }
           },
           "parameters": {
@@ -2677,18 +2677,6 @@
               "defaultValue": "Standard_D2s_v3",
               "metadata": {
                 "description": "VM size for jumpbox"
-              }
-            },
-            "windowsOSVersion": {
-              "type": "string",
-              "defaultValue": "2022-datacenter-azure-edition",
-              "allowedValues": [
-                "2019-Datacenter",
-                "2022-Datacenter",
-                "2022-datacenter-azure-edition"
-              ],
-              "metadata": {
-                "description": "Windows Server version"
               }
             }
           },
@@ -2747,9 +2735,9 @@
                 },
                 "storageProfile": {
                   "imageReference": {
-                    "publisher": "MicrosoftWindowsServer",
-                    "offer": "WindowsServer",
-                    "sku": "[parameters('windowsOSVersion')]",
+                    "publisher": "MicrosoftWindowsDesktop",
+                    "offer": "Windows-11",
+                    "sku": "win11-23h2-pro",
                     "version": "latest"
                   },
                   "osDisk": {
