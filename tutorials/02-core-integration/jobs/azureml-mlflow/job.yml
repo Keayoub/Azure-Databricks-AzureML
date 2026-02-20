@@ -1,0 +1,59 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+# Azure ML Job Configuration for AzureML_MLflow_Model_Integration_Test Notebook
+type: command
+
+# Job Metadata
+display_name: AzureML-MLflow-Model-Integration-Test
+description: "Validates that Azure ML can load and run a model from Databricks MLflow registry"
+experiment_name: azureml-mlflow-integration
+
+# Code and Command
+code: ../../
+command: >-
+  pip install papermill ipykernel databricks-sdk mlflow numpy pandas &&
+  papermill 
+  AzureML_MLflow_Model_Integration_Test.ipynb 
+  jobs/azureml-mlflow/output_AzureML_MLflow_Model_Integration_Test.ipynb
+  -k python3
+
+# Environment
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu22.04:latest
+  conda_file: conda-env.yml
+
+# Compute
+compute: azureml:cpu-cluster
+
+# Environment variables for Databricks MLflow connection
+environment_variables:
+  DATABRICKS_HOST: ${{inputs.databricks_host}}
+  DATABRICKS_MODEL_NAME: ${{inputs.model_name}}
+  DATABRICKS_MODEL_VERSION: ${{inputs.model_version}}
+
+# Inputs (parameterized)
+inputs:
+  databricks_host:
+    type: string
+    description: "Databricks workspace host URL (e.g., https://adb-<id>.<region>.azuredatabricks.net)"
+  model_name:
+    type: string
+    description: "MLflow model name in Databricks registry (e.g., sklearn-model)"
+  model_version:
+    type: string
+    default: "latest"
+    description: "Model version or 'latest' to use the latest version"
+
+# Identity (uses Azure ML managed identity)
+identity:
+  type: managed
+
+# Resources
+resources:
+  instance_count: 1
+
+# Job Settings
+tags:
+  purpose: integration-testing
+  service: azureml-mlflow
+  environment: dev

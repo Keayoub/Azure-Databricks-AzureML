@@ -1,0 +1,54 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+# Azure ML Job Configuration for AzureML_to_Databricks_Data_Access Notebook
+type: command
+
+# Job Metadata
+display_name: AzureML-to-Databricks-Integration-Test
+description: "Validates that Azure ML can authenticate to Databricks and call a model serving endpoint"
+experiment_name: azureml-databricks-integration
+
+# Code and Command
+code: ../../
+command: >-
+  pip install papermill ipykernel databricks-sdk &&
+  papermill 
+  AzureML_to_Databricks_Data_Access.ipynb 
+  jobs/azureml-databricks/output_AzureML_to_Databricks_Data_Access.ipynb
+  -k python3
+
+# Environment
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu22.04:latest
+  conda_file: conda-env.yml
+
+# Compute
+compute: azureml:cpu-cluster
+
+# Environment variables for Databricks connection
+environment_variables:
+  DATABRICKS_HOST: ${{inputs.databricks_host}}
+  DATABRICKS_ENDPOINT_NAME: ${{inputs.endpoint_name}}
+
+# Inputs (parameterized)
+inputs:
+  databricks_host:
+    type: string
+    description: "Databricks workspace host URL (e.g., https://adb-<id>.<region>.azuredatabricks.net)"
+  endpoint_name:
+    type: string
+    description: "Databricks model serving endpoint name"
+
+# Identity (uses Azure ML managed identity)
+identity:
+  type: managed
+
+# Resources
+resources:
+  instance_count: 1
+
+# Job Settings
+tags:
+  purpose: integration-testing
+  service: azureml-databricks
+  environment: dev
