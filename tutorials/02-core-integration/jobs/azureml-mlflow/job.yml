@@ -13,8 +13,8 @@ code: ../../
 command: >-
   pip install papermill ipykernel databricks-sdk mlflow numpy pandas &&
   papermill 
-  AzureML_MLflow_Model_Integration_Test.ipynb 
-  jobs/azureml-mlflow/output_AzureML_MLflow_Model_Integration_Test.ipynb
+  aml-mlflow-model-integration-test.ipynb 
+  jobs/azureml-mlflow/output_aml-mlflow-model-integration-test.ipynb
   -k python3
 
 # Environment

@@ -13,8 +13,8 @@ code: ../../
 command: >-
   pip install papermill ipykernel databricks-sdk &&
   papermill 
-  AzureML_to_Databricks_Data_Access.ipynb 
-  jobs/azureml-databricks/output_AzureML_to_Databricks_Data_Access.ipynb
+  aml-to-databricks-data-access.ipynb 
+  jobs/azureml-databricks/output_aml-to-databricks-data-access.ipynb
   -k python3
 
 # Environment

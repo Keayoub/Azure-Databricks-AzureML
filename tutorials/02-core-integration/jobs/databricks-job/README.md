@@ -1,103 +1,206 @@
-# Databricks Job Configurations
+# Databricks-AzureML Integration Job
 
-This folder contains configurations for running Databricks notebooks as jobs.
-
-## 🎯 Choose Your Setup
-
-### Option 1: Single Notebook Job (This Guide)
-Run **one specific notebook** (e.g., `Databricks_KeyVault_Integration_Test.ipynb`)
-
-**✅ Use this for:**
-- Testing individual integration patterns
-- Focused validation of specific features
-- Quick execution (minutes)
-
-### Option 2: Complete Workflow (17 Notebooks)
-Run **all Databricks notebooks** in logical order
-
-**✅ Use this for:**
-- Comprehensive end-to-end testing
-- CI/CD validation
-- Full integration validation
-- Expected duration: 2-4 hours
-
-📚 **[Complete Workflow Guide](COMPLETE-WORKFLOW.md)** ← Click for multi-task workflow setup
+Simple, unified approach to test Databricks ↔ Azure ML integration using a single notebook and lightweight CLI tool.
 
 ---
 
-## Single Notebook Job Setup
-
-This guide explains how to create and run the `Databricks_KeyVault_Integration_Test.ipynb` notebook as a Databricks job using the Databricks Jobs API.
-
-## 📁 Folder Structure
-
-```
-tutorials/02-core-integration/
-├── Databricks_KeyVault_Integration_Test.ipynb  ← Single notebook
-├── AzureML_KeyVault_Integration_Test.ipynb     ← Azure ML notebook
-└── jobs/
-    └── databricks-job/                          ← You are here
-        ├── job-definition.json                  ← Single notebook job
-        ├── complete-workflow-job.json           ← 17-task workflow
-        ├── create-databricks-job.ps1            ← Single job script
-        ├── create-databricks-job.sh             ← Single job script
-        ├── create-complete-workflow.ps1         ← Workflow script
-        ├── create-complete-workflow.sh          ← Workflow script
-        ├── README.md                            ← This file
-        └── COMPLETE-WORKFLOW.md                 ← Workflow documentation
-```
-
-**Note**: Upload notebooks to Databricks workspace at `/Workspace/tutorials/02-core-integration/`
-
 ## 📁 Files
 
-### Single Notebook Job
-- **job-definition.json** - Single notebook job configuration
-- **create-databricks-job.ps1** - PowerShell script to create/update single job
-- **create-databricks-job.sh** - Bash script to create/update single job
+| File | Purpose |
+|------|---------|
+| `adb-azureml-integration-unified.ipynb` | Single notebook with all integration tests |
+| `databricks-azureml-job.ps1` | PowerShell CLI wrapper to create/run/manage jobs |
 
-### Complete Workflow (17 Notebooks)
-- **complete-workflow-job.json** - Multi-task workflow configuration
-- **create-complete-workflow.ps1** - PowerShell script to create/update workflow
-- **create-complete-workflow.sh** - Bash script to create/update workflow
-- **COMPLETE-WORKFLOW.md** - Complete workflow documentation
+---
 
-## 🚀 Quick Start
+## ⚡ Quick Start
 
-### Windows (PowerShell)
+### Prerequisites
+- Databricks workspace with credentials in secret scope `azureml-kv-scope`
+- `DATABRICKS_TOKEN` environment variable set or enter when prompted
+- Notebook uploaded to Databricks workspace
+
+### Option 1: Using PowerShell Script (Recommended)
 
 ```powershell
-.\create-databricks-job.ps1 `
-    -WorkspaceUrl "https://adb-1234567890123456.7.azuredatabricks.net" `
-    -Token "dapi..."
+# Navigate to folder
+cd tutorials/02-core-integration/jobs/databricks-job
+
+# Set token (or enter when prompted)
+$env:DATABRICKS_TOKEN = "dapi..."
+
+# Create job (one-time)
+.\databricks-azureml-job.ps1 -Action create `
+  -WorkspaceUrl "https://adb-xxx.azuredatabricks.net" `
+  -NotebookPath "/Users/your-email/tutorials/Databricks_AzureML_Integration_Unified"
+
+# Run job (anytime)
+.\databricks-azureml-job.ps1 -Action run `
+  -WorkspaceUrl "https://adb-xxx.azuredatabricks.net"
+
+# List all jobs
+.\databricks-azureml-job.ps1 -Action list `
+  -WorkspaceUrl "https://adb-xxx.azuredatabricks.net"
+
+# Delete job
+.\databricks-azureml-job.ps1 -Action delete `
+  -WorkspaceUrl "https://adb-xxx.azuredatabricks.net"
 ```
 
-### Linux/Mac (Bash)
+### Option 2: Using Databricks CLI
 
 ```bash
-chmod +x create-databricks-job.sh
+# Install databricks-cli
+pip install databricks-cli
 
-./create-databricks-job.sh \
-    --workspace-url "https://adb-1234567890123456.7.azuredatabricks.net" \
-    --token "dapi..."
+# Configure
+databricks configure --token
+
+# Create job
+databricks jobs create --json '{
+  "name": "AzureML-Integration-Test",
+  "new_cluster": {
+    "spark_version": "13.3.x-scala2.12",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": 1
+  },
+  "notebook_task": {
+    "notebook_path": "/Users/your-email/tutorials/Databricks_AzureML_Integration_Unified"
+  }
+}'
+
+# Run job
+databricks jobs run-now --job-id 123
+
+# List jobs
+databricks jobs list
 ```
 
-## 📋 Prerequisites
+---
 
-### 1. Upload Notebook to Databricks
+## 📊 Integration Tests Included
 
-Upload `../../Databricks_KeyVault_Integration_Test.ipynb` to your Databricks workspace:
+✓ **Databricks → Azure ML** - Call Azure ML endpoint from notebook  
+✓ **Azure ML → Databricks** - Load and run Databricks MLflow model  
+✓ **Databricks Workspace Client** - Verify workspace API connectivity  
+✓ **Full Integration Report** - Summary of all test results  
+
+---
+
+## 📋 Setup Steps
+
+### 1. Prepare Databricks Workspace
+
+Upload the integration notebook to Databricks:
 
 ```bash
-# Using Databricks CLI (from the jobs/databricks-job folder)
+# Using Databricks CLI
 databricks workspace import \
-    ../../Databricks_KeyVault_Integration_Test.ipynb \
-    /Workspace/tutorials/02-core-integration/Databricks_KeyVault_Integration_Test \
-    --language PYTHON \
-    --format JUPYTER
+  Databricks_AzureML_Integration_Unified.py \
+  /Users/your-email/tutorials/Databricks_AzureML_Integration_Unified \
+  --language PYTHON \
+  --format SOURCE
 ```
 
-Or use the Databricks UI: **Workspace** → **Import** → Select file
+Or manually in Databricks UI: **Workspace** → **Create Notebook** → Copy content
+
+### 2. Create Secret Scope
+
+In Databricks notebook or CLI:
+
+```python
+# Create secret scope
+dbutils.secrets.createScope("azureml-kv-scope")
+
+# Add Azure ML credentials
+dbutils.secrets.put("azureml-kv-scope", "subscription-id", "your-subscription-id")
+dbutils.secrets.put("azureml-kv-scope", "resource-group", "your-resource-group")
+dbutils.secrets.put("azureml-kv-scope", "workspace-name", "your-azureml-workspace")
+dbutils.secrets.put("azureml-kv-scope", "databricks-host", "https://adb-xxx.azuredatabricks.net")
+dbutils.secrets.put("azureml-kv-scope", "databricks-token", "dapi...")
+dbutils.secrets.put("azureml-kv-scope", "mlflow-model-name", "your-model-name")
+dbutils.secrets.put("azureml-kv-scope", "azureml-endpoint-name", "your-endpoint-name")
+```
+
+### 3. Create and Run Job
+
+Use the PowerShell script or Databricks CLI (see **Quick Start** above)
+
+### 4. Monitor Execution
+
+- View job in Databricks UI: **Workflows** → **Jobs**
+- Check run logs for test results and integration report
+
+---
+
+## 🔧 Troubleshooting
+
+### Secret scope not found?
+```python
+# List existing scopes
+dbutils.secrets.listScopes()
+
+# Create new scope if needed
+dbutils.secrets.createScope("azureml-kv-scope")
+```
+
+### Token issues?
+```bash
+# Generate new token in Databricks UI
+# Settings → User Settings → Access Tokens → Generate New Token
+
+# Set environment variable
+$env:DATABRICKS_TOKEN = "dapi..."
+
+# Or pass directly to script
+.\databricks-azureml-job.ps1 -Action create -Token "dapi..." ...
+```
+
+### Notebook not found?
+```bash
+# Upload notebook first
+databricks workspace import Databricks_AzureML_Integration_Unified.py \
+  /Users/your-email/tutorials/Databricks_AzureML_Integration_Unified \
+  --language PYTHON --format SOURCE
+
+# Then reference full path in job creation
+...
+-NotebookPath "/Users/your-email/tutorials/Databricks_AzureML_Integration_Unified"
+```
+
+### Cluster creation fails?
+```powershell
+# Use existing cluster instead
+.\databricks-azureml-job.ps1 -Action create `
+  -WorkspaceUrl "https://adb-xxx.azuredatabricks.net" `
+  -NotebookPath "/Users/your-email/tutorials/Databricks_AzureML_Integration_Unified" `
+  -ClusterId "0123-456789-abcdef"
+```
+
+---
+
+## 📈 Architecture
+
+```
+Databricks Workspace
+├── Notebook: Databricks_AzureML_Integration_Unified
+│   ├── Test 1: Call Azure ML endpoint
+│   ├── Test 2: Load MLflow model from Databricks
+│   ├── Test 3: Verify Workspace API
+│   └── Summary Report
+└── Job: AzureML-Integration-Test
+    └── Executes notebook on schedule or on-demand
+```
+
+---
+
+## 📝 Notes
+
+- **Simplified Approach**: Single notebook replaces 8+ task workflow (312-line JSON → streamlined Python)
+- **Maintenance**: Edit one notebook vs managing complex JSON configurations
+- **Performance**: Complete test suite runs in ~10 minutes
+- **Reusability**: Job can be scheduled or run manually anytime
+- **Extensibility**: Add more tests directly to the notebook
 
 **Target Path**: `/Workspace/tutorials/02-core-integration/Databricks_KeyVault_Integration_Test`
 
