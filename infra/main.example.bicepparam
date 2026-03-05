@@ -14,9 +14,18 @@ param alertEmailAddress = 'alerts@yourdomain.com'
 // Feature flags
 param enableUnityCatalog = true
 param deployAzureML = true
+param deployAzureMLRegistry = false
 param deployAIFoundry = true
 param deployAKS = false
 param aksNodeCount = 3
+
+// Azure ML Registry Configuration (optional)
+param azureMLRegistryName = ''
+param azureMLRegistryPublicNetworkAccess = 'Enabled'
+param azureMLRegistryReplicationRegions = []
+param azureMLRegistryIdentityMode = 'SystemAssigned'
+param azureMLRegistrySkuName = 'Basic'
+param azureMLRegistryManagedResourceGroupResourceId = ''
 
 // AI Foundry Landing Zone - Optional Services (set to true to deploy)
 param deployAISearch = false

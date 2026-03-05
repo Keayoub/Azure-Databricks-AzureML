@@ -126,14 +126,7 @@ If you need to run phases separately:
 
 ### Phase 1 Only
 
-```powershell
-# Validate prerequisites
-pwsh infra/scripts/validate.ps1
-
-# Deploy Bicep infrastructure
-azd provision
-```
-
+ - Azure ML Registry (optional)
 ### Phase 2 Only (After Phase 1)
 
 ```powershell
@@ -147,6 +140,24 @@ Or manually:
 cd terraform/environments
 terraform init
 terraform plan -out=tfplan
+
+### Optional: Enable Azure ML Registry
+
+Set these parameters in `infra/main.bicepparam` before `azd provision`:
+
+```bicep
+param deployAzureMLRegistry = true
+param azureMLRegistryName = ''
+param azureMLRegistryPublicNetworkAccess = 'Enabled'
+param azureMLRegistryReplicationRegions = []
+param azureMLRegistryIdentityMode = 'SystemAssigned'
+param azureMLRegistrySkuName = 'Basic'
+```
+
+Behavior:
+- If `azureMLRegistryReplicationRegions` is empty, deployment defaults to primary `location`.
+- `managedResourceGroup` is service-managed/read-only and appears after deployment.
+- If `azureMLRegistryPublicNetworkAccess = 'Disabled'`, private endpoint and DNS design is required.
 terraform apply tfplan
 ```
 
@@ -161,9 +172,19 @@ Resource Group: rg-dev-dbxaml-shared
 Storage Account: stdbxamldevq3a3hmrnwgh3m
 Container: tfstate
 
-Files:
-  - metastore.tfstate    (Metastore backend)
-  - environments.tfstate (UC components backend)
+
+### Azure ML Registry Deployment Failures
+
+When Registry deployment fails, inspect deployment errors for `error.code` and `error.message`:
+
+```powershell
+az deployment sub show --name <deployment-name> --query properties.error
+```
+
+Common causes:
+- **Policy denial**: Registry may provision supporting resources and can require policy exemptions.
+- **Insufficient permissions**: Minimum required role is `Contributor` on target resource group.
+- **Invalid name/region**: Registry name must match `^[a-zA-Z0-9][a-zA-Z0-9\-_]{2,32}$` and region must be valid.
 ```
 
 ### Initialize Backend (One-Time)

@@ -115,10 +115,29 @@ Copy-Item infra/main.example.bicepparam infra/main.bicepparam
 
 - **Azure Databricks** (Premium, VNet injection, Secure Cluster Connectivity)
 - **Azure Machine Learning** workspace
+- **Azure Machine Learning Registry** (optional)
 - **Azure AI Foundry** hub
 - **Azure Key Vault** (Premium with purge protection)
 - **Container Registry** (Premium)
 - **Azure Kubernetes Service** (optional)
+
+### Optional: Azure ML Registry
+
+Enable Azure ML Registry in `infra/main.bicepparam`:
+
+```bicep
+param deployAzureMLRegistry = true
+param azureMLRegistryName = '' // Leave empty for auto-generated name
+param azureMLRegistryPublicNetworkAccess = 'Enabled' // or 'Disabled'
+param azureMLRegistryReplicationRegions = [] // defaults to [location]
+param azureMLRegistryIdentityMode = 'SystemAssigned' // or 'None'
+param azureMLRegistrySkuName = 'Basic'
+```
+
+Notes:
+- Registry resource type: `Microsoft.MachineLearningServices/registries@2025-12-01`
+- If `azureMLRegistryPublicNetworkAccess = 'Disabled'`, plan Private Endpoint and DNS separately.
+- Supporting resources are service-managed; do not pre-create service-populated/read-only fields.
 
 ### Data Governance
 

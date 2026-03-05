@@ -26,6 +26,9 @@ param enableUnityCatalog bool = true
 @description('Deploy Azure ML workspace')
 param deployAzureML bool = true
 
+@description('Deploy Azure ML registry')
+param deployAzureMLRegistry bool = false
+
 @description('Deploy AI Foundry hub')
 param deployAIFoundry bool = true
 
@@ -97,6 +100,27 @@ param enableSharedComputeInstance bool = true
 
 @description('Enable personal compute instance for Azure ML development')
 param enablePersonalComputeInstance bool = false
+
+@description('Optional explicit Azure ML registry name. Leave empty for auto-generated name.')
+@maxLength(33)
+param azureMLRegistryName string = ''
+
+@description('Azure ML Registry public network access setting')
+@allowed(['Enabled', 'Disabled'])
+param azureMLRegistryPublicNetworkAccess string = 'Enabled'
+
+@description('Azure ML Registry replication regions. If empty, only primary location is used.')
+param azureMLRegistryReplicationRegions array = []
+
+@description('Azure ML Registry identity mode')
+@allowed(['SystemAssigned', 'None'])
+param azureMLRegistryIdentityMode string = 'SystemAssigned'
+
+@description('Azure ML Registry SKU name')
+param azureMLRegistrySkuName string = 'Basic'
+
+@description('Optional managed resource group resource ID for Azure ML Registry')
+param azureMLRegistryManagedResourceGroupResourceId string = ''
 
 @description('VM size for Azure ML shared compute instance')
 param sharedComputeInstanceVmSize string = 'Standard_D4s_v3'
@@ -480,6 +504,24 @@ module azureML 'components/azureml/azureml.bicep' = if (deployAzureML) {
   }
 }
 
+// Azure ML Registry (optional)
+module azureMLRegistry 'components/azureml/registry.bicep' = if (deployAzureMLRegistry) {
+  scope: aiPlatformResourceGroup
+  name: 'azureml-registry-deployment'
+  params: {
+    location: location
+    environmentName: environmentName
+    projectName: projectName
+    registryName: azureMLRegistryName
+    publicNetworkAccess: azureMLRegistryPublicNetworkAccess
+    replicationRegions: azureMLRegistryReplicationRegions
+    identityMode: azureMLRegistryIdentityMode
+    skuName: azureMLRegistrySkuName
+    managedResourceGroupResourceId: azureMLRegistryManagedResourceGroupResourceId
+    tags: tags
+  }
+}
+
 // AI Foundry Hub
 module aiFoundry 'components/ai-foundry/ai-foundry.bicep' = if (deployAIFoundry) {
   scope: aiPlatformResourceGroup
@@ -733,6 +775,15 @@ output databricksWorkspaceUrl string = databricks.outputs.workspaceUrl
 
 @description('Azure ML workspace ID')
 output azureMLWorkspaceId string = deployAzureML ? azureML!.outputs.workspaceId : ''
+
+@description('Azure ML registry ID')
+output azureMLRegistryId string = deployAzureMLRegistry ? azureMLRegistry!.outputs.registryId : ''
+
+@description('Azure ML registry name')
+output azureMLRegistryName string = deployAzureMLRegistry ? azureMLRegistry!.outputs.registryName : ''
+
+@description('Azure ML registry managed resource group ID (read-only)')
+output azureMLRegistryManagedResourceGroupId string = deployAzureMLRegistry ? azureMLRegistry!.outputs.managedResourceGroupId : ''
 
 @description('AI Foundry hub ID')
 output aiFoundryHubId string = deployAIFoundry ? aiFoundry!.outputs.hubId : ''
