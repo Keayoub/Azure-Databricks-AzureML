@@ -14,7 +14,7 @@ param alertEmailAddress = 'alerts@yourdomain.com'
 // Feature flags
 param enableUnityCatalog = true
 param deployAzureML = true
-param deployAzureMLRegistry = false
+param deployAzureMLRegistry = true
 param deployAIFoundry = true
 param deployAKS = false
 param aksNodeCount = 3
@@ -25,13 +25,24 @@ param azureMLRegistryPublicNetworkAccess = 'Enabled'
 param azureMLRegistryReplicationRegions = []
 param azureMLRegistryIdentityMode = 'SystemAssigned'
 param azureMLRegistrySkuName = 'Basic'
-param azureMLRegistryManagedResourceGroupResourceId = ''
+param azureMLRegistryUseSystemCreatedResources = true
+param azureMLRegistryStorageAccountName = ''
+param azureMLRegistryStorageAccountType = ''
+param azureMLRegistryStorageAccountHnsEnabled = true
+param azureMLRegistryStorageAccountAllowBlobPublicAccess = false
+param azureMLRegistryAcrAccountName = ''
+param azureMLRegistryAcrAccountSku = ''
 
 // AI Foundry Landing Zone - Optional Services (set to true to deploy)
 param deployAISearch = false
 param deployCosmosDB = false
 param deployAppConfiguration = false
 param deployAPIM = false
+
+// Azure ML Compute Instances Configuration
+param enableSharedComputeInstance = true
+param enablePersonalComputeInstance = false
+param sharedComputeInstanceVmSize = 'Standard_D4s_v3'
 
 // AI Service SKUs and Configuration
 param aiSearchSku = 'standard'

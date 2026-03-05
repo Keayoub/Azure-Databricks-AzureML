@@ -119,8 +119,26 @@ param azureMLRegistryIdentityMode string = 'SystemAssigned'
 @description('Azure ML Registry SKU name')
 param azureMLRegistrySkuName string = 'Basic'
 
-@description('Optional managed resource group resource ID for Azure ML Registry')
-param azureMLRegistryManagedResourceGroupResourceId string = ''
+@description('Use system-created storage and ACR for Azure ML Registry')
+param azureMLRegistryUseSystemCreatedResources bool = true
+
+@description('Optional system-created registry storage account name')
+param azureMLRegistryStorageAccountName string = ''
+
+@description('Optional system-created registry storage account type')
+param azureMLRegistryStorageAccountType string = ''
+
+@description('Optional system-created registry storage account HNS setting')
+param azureMLRegistryStorageAccountHnsEnabled bool = true
+
+@description('Optional system-created registry storage account public blob access setting')
+param azureMLRegistryStorageAccountAllowBlobPublicAccess bool = false
+
+@description('Optional system-created registry ACR account name')
+param azureMLRegistryAcrAccountName string = ''
+
+@description('Optional system-created registry ACR SKU')
+param azureMLRegistryAcrAccountSku string = ''
 
 @description('VM size for Azure ML shared compute instance')
 param sharedComputeInstanceVmSize string = 'Standard_D4s_v3'
@@ -517,7 +535,14 @@ module azureMLRegistry 'components/azureml/registry.bicep' = if (deployAzureMLRe
     replicationRegions: azureMLRegistryReplicationRegions
     identityMode: azureMLRegistryIdentityMode
     skuName: azureMLRegistrySkuName
-    managedResourceGroupResourceId: azureMLRegistryManagedResourceGroupResourceId
+    managedResourceGroupResourceId: sharedResourceGroup.id
+    useSystemCreatedResources: azureMLRegistryUseSystemCreatedResources
+    registryStorageAccountName: azureMLRegistryStorageAccountName
+    registryStorageAccountType: azureMLRegistryStorageAccountType
+    registryStorageAccountHnsEnabled: azureMLRegistryStorageAccountHnsEnabled
+    registryStorageAccountAllowBlobPublicAccess: azureMLRegistryStorageAccountAllowBlobPublicAccess
+    registryAcrAccountName: azureMLRegistryAcrAccountName
+    registryAcrAccountSku: azureMLRegistryAcrAccountSku
     tags: tags
   }
 }
