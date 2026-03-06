@@ -536,6 +536,7 @@ module azureMLRegistry 'components/azureml/registry.bicep' = if (deployAzureMLRe
     identityMode: azureMLRegistryIdentityMode
     skuName: azureMLRegistrySkuName
     useSystemCreatedResources: azureMLRegistryUseSystemCreatedResources
+    // System-created resource parameters
     registryStorageAccountName: azureMLRegistryStorageAccountName
     registryStorageAccountType: azureMLRegistryStorageAccountType
     registryStorageAccountHnsEnabled: azureMLRegistryStorageAccountHnsEnabled

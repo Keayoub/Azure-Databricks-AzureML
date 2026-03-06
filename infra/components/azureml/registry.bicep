@@ -29,9 +29,8 @@ param identityMode string = 'SystemAssigned'
 @description('Registry SKU name')
 param skuName string = 'Basic'
 
-@description('Use system-created storage and ACR for the registry')
+@description('Use system-created storage and ACR for the registry.')
 param useSystemCreatedResources bool = true
-
 @description('Optional system-created storage account name')
 param registryStorageAccountName string = ''
 
@@ -63,7 +62,7 @@ var effectiveReplicationRegions = union(
 var effectiveRegionDetails = [
   for region in effectiveReplicationRegions: {
     location: region
-    // Service requires storage or ACR details in some regions
+    // System-created resources (Azure manages storage + ACR)
     storageAccountDetails: useSystemCreatedResources
       ? [
           {
