@@ -29,9 +29,6 @@ param identityMode string = 'SystemAssigned'
 @description('Registry SKU name')
 param skuName string = 'Basic'
 
-@description('Optional managed resource group resource ID for the registry. Leave empty to let the service manage this value.')
-param managedResourceGroupResourceId string = ''
-
 @description('Use system-created storage and ACR for the registry')
 param useSystemCreatedResources bool = true
 
@@ -115,13 +112,7 @@ var baseProperties = {
   publicNetworkAccess: publicNetworkAccess
   regionDetails: effectiveRegionDetails
 }
-var registryProperties = empty(managedResourceGroupResourceId)
-  ? baseProperties
-  : union(baseProperties, {
-      managedResourceGroup: {
-        resourceId: managedResourceGroupResourceId
-      }
-    })
+var registryProperties = baseProperties
 
 resource registry 'Microsoft.MachineLearningServices/registries@2025-12-01' = {
   name: effectiveRegistryName

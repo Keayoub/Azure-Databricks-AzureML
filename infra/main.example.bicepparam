@@ -8,8 +8,6 @@ param projectName = 'dbxaml'
 // Admin configuration - CHANGE THIS TO YOUR OBJECT ID
 param adminObjectId = '' // Run: az ad signed-in-user show --query id -o tsv
 
-// Monitoring alert notifications
-param alertEmailAddress = 'alerts@yourdomain.com'
 
 // Feature flags
 param enableUnityCatalog = true
