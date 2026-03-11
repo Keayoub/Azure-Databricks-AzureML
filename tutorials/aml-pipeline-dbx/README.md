@@ -4,8 +4,8 @@
 
 ```text
 aml_databricks/
-├── auth.py                  # Credential resolution (UAMI / SPN / SAMI)
-├── databricks_client.py     # HTTP client for Model Serving endpoints
+├── auth.py                  # Builds Databricks SDK WorkspaceClient (UAMI / SPN / SAMI)
+├── databricks_client.py     # Databricks SDK client for Model Serving endpoints
 ├── pipeline_step.py         # AzureML job entry point
 ├── pipeline_definition.py   # AzureML SDK v2 pipeline submission
 ├── requirements.txt

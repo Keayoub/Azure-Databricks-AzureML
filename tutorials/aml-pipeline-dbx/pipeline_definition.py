@@ -12,7 +12,7 @@ import logging
 import os
 
 from azure.ai.ml import MLClient, command, Input
-from azure.ai.ml.entities import ManagedIdentityConfiguration, Environment, BuildContext
+from azure.ai.ml.entities import ManagedIdentityConfiguration
 from azure.identity import DefaultAzureCredential
 
 logger = logging.getLogger(__name__)
