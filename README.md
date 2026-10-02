@@ -2,6 +2,23 @@
 
 Complete Infrastructure as Code (IaC) deployment for a secure, enterprise-grade data and AI platform on Azure.
 
+## 📑 Table of Contents
+
+- [Quick Start (5 Minutes)](#-quick-start-5-minutes)
+- [Configuration Files](#-configuration-files)
+- [What Gets Deployed](#️-what-gets-deployed)
+- [Unity Catalog Structure](#-unity-catalog-structure)
+- [Security Features](#-security-features)
+- [Two-Phase Deployment Architecture](#️-two-phase-deployment-architecture)
+- [Architecture Diagram](#️-architecture-diagram)
+- [Prerequisites](#-prerequisites)
+- [Project Structure](#-project-structure)
+- [Deployment Time](#-deployment-time)
+- [Documentation](#-documentation)
+- [Common Commands](#-common-commands)
+- [Support](#-support)
+- [License](#-license)
+
 ## 🎯 Quick Start (5 Minutes)
 
 ### Prerequisites Installation (1 minute)
@@ -12,10 +29,10 @@ All prerequisites in one script - works on Windows, macOS, and Linux!
 
 ```powershell
 # Run the universal installation script
-pwsh ./scripts/install-prerequisites.ps1
+pwsh ./infra/scripts/deployment/install-prerequisites.ps1
 
 # Or upgrade existing tools
-pwsh ./scripts/install-prerequisites.ps1 -Upgrade
+pwsh ./infra/scripts/deployment/install-prerequisites.ps1 -Upgrade
 ```
 
 This installs:
@@ -78,20 +95,25 @@ Copy-Item infra/main.example.bicepparam infra/main.bicepparam
 
 - 🗺️ **[PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)** - Complete documentation map and navigation guide
 - ⚡ **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
-- 📋 **[DEPLOYMENT-PROCESS.md](docs/DEPLOYMENT-PROCESS.md)** - Complete deployment workflow and troubleshooting
-- ✅ **[DEPLOYMENT-VALIDATION.md](docs/DEPLOYMENT-VALIDATION.md)** - Test and validate deployed infrastructure
+- 📋 **[DEPLOYMENT-PROCESS.md](docs/DEPLOYMENT-PROCESS.md)** - Complete deployment workflow, validation, and troubleshooting
 
 **Terraform Guides:**
 
-- 🏗️ **[terraform/TERRAFORM-README.md](terraform/TERRAFORM-README.md)** - Terraform structure, architecture, and quick start
-- 🔍 **[terraform/INDEX.md](terraform/INDEX.md)** - Quick navigation and reference
+- 🏗️ **[terraform/docs/TERRAFORM-README.md](terraform/docs/TERRAFORM-README.md)** - Terraform structure, architecture, and quick start
+- 🔍 **[terraform/docs/INDEX.md](terraform/docs/INDEX.md)** - Quick navigation and reference
 - [Terraform Quick Start](terraform/docs/TERRAFORM-QUICK-START.md)
 - [Terraform Quick Reference](terraform/docs/TERRAFORM-QUICK-REFERENCE.md)
+- [Terraform Getting Started](terraform/docs/GETTING-STARTED.md)
+- [Terraform Best Practices](terraform/docs/BEST-PRACTICES.md)
 
 **Module Documentation:**
 
 - [Unity Catalog Catalogs Module](terraform/modules/adb-uc-catalogs/README.md)
 - [Unity Catalog Volumes Module](terraform/modules/adb-uc-volumes/README.md)
+- [Workspace Config Module](terraform/modules/adb-workspace-config/README.md)
+- [Secret Scopes Module](terraform/modules/adb-secret-scopes/README.md)
+- [Cluster Policies Module](terraform/modules/adb-cluster-policies/README.md)
+- [Instance Pools Module](terraform/modules/adb-instance-pools/README.md)
 
 **Project Information:**
 
@@ -100,7 +122,6 @@ Copy-Item infra/main.example.bicepparam infra/main.bicepparam
 - 🔑 **[DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md](docs/DATABRICKS-KEYVAULT-ARCHITECTURE-GUIDE.md)** - Key Vault options, pros/cons, and recommended pattern
 
 > **Note:** Your Databricks Account ID is available at <https://accounts.azuredatabricks.net> in the URL or Account Settings. This is a one-time configuration - Azure Developer CLI stores it for all future deployments.
-
 
 ## 🏗️ What Gets Deployed
 
@@ -144,7 +165,7 @@ Notes:
 - **Unity Catalog** with 3 LoB catalogs per environment
 - **Medallion Architecture**: Bronze, Silver, Gold schemas
 - **Delta Sharing** enabled
-- **Environment-based isolation**: dev, QA, prod
+- **Environment-based isolation**: dev, staging, prod
 
 ## 📊 Unity Catalog Structure
 
@@ -228,6 +249,34 @@ This separation ensures:
 - ✅ **Team collaboration**: Different teams manage different layers
 - ✅ **Repeatability**: Run either layer independently
 
+### High-Level Flow
+
+```
+┌─────────────────────────────────────────────────┐
+│         Azure Subscription                      │
+├─────────────────────────────────────────────────┤
+│  ┌──────────────────────────────────────────┐  │
+│  │  Bicep IaC (Azure Infrastructure)        │  │
+│  │  ├─ Resource Groups (4)                  │  │
+│  │  ├─ Networking (VNet, NSG, Endpoints)    │  │
+│  │  ├─ Databricks Workspace                 │  │
+│  │  ├─ Azure ML Workspace                   │  │
+│  │  ├─ AI Foundry Hub                       │  │
+│  │  └─ Monitoring (Log Analytics)           │  │
+│  └──────────────────────────────────────────┘  │
+│           ↓ Outputs to                         │
+│  ┌──────────────────────────────────────────┐  │
+│  │  Terraform IaC (Unity Catalog Layer)      │  │
+│  │  ├─ UC Metastore                         │  │
+│  │  ├─ Catalogs & Schemas                   │  │
+│  │  ├─ Volumes & Permissions                │  │
+│  │  └─ Security & Access Control            │  │
+│  └──────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+> For the full resource-level diagram, see [Architecture Diagram](#️-architecture-diagram) below.
+
 ### Terraform Structure
 
 ```
@@ -257,68 +306,59 @@ terraform/
 - Databricks CLI
 - Owner or Contributor role on Azure subscription
 
-**👉 Install all prerequisites with one command** (see Quick Start above)
+**👉 Install all prerequisites with one command**: `pwsh ./infra/scripts/deployment/install-prerequisites.ps1` (see Quick Start above)
 
 ## 📁 Project Structure
 
 ```text
 infra/
-├── main.bicep              # Main orchestration
-├── main.bicepparam         # Parameters (edit this)
-└── modules/
-    ├── networking.bicep
-    ├── databricks.bicep
-    ├── storage.bicep
-    ├── keyvault.bicep
-    ├── acr.bicep
-    ├── azureml.bicep
-    ├── ai-foundry.bicep
-    ├── aks.bicep
-    ├── unity-catalog.bicep
-    └── scripts/
-        └── setup-unity-catalog.ps1
+├── main.bicep                   # Main orchestration (4 resource groups, 30+ modules)
+├── main.bicepparam               # Parameters (edit this; gitignored)
+├── main.example.bicepparam       # Parameter template (committed)
+├── components/
+│   ├── networking/               # VNet, subnets, NSGs, private DNS
+│   ├── storage/                  # ADLS Gen2 storage account
+│   ├── keyvault/                 # Platform + Databricks Key Vaults
+│   ├── acr/                      # Container Registry
+│   ├── databricks/                # Workspace, access connector, Unity Catalog
+│   ├── azureml/                  # Azure ML workspace, registry, DNS
+│   ├── ai-foundry/                # AI Foundry hub
+│   ├── ai-search/                 # Azure AI Search (optional)
+│   ├── cosmos-db/                 # Azure Cosmos DB (optional)
+│   ├── aks/                       # Azure Kubernetes Service (optional)
+│   ├── aca/                       # Azure Container Apps (optional)
+│   ├── apim/                      # API Management (optional)
+│   ├── app-config/                # App Configuration (optional)
+│   ├── compute/                   # Bastion, jumpbox (optional)
+│   ├── security/                  # RBAC, policy assignments, cross-RG roles
+│   └── monitoring/                # Log Analytics, alerts
+└── scripts/
+    ├── validate.ps1               # Pre-provision validation
+    ├── postprovision.ps1          # Creates UC metastore (Phase 1 → 1.5)
+    ├── postdeploy.ps1 / .sh       # Deploys UC components (Phase 2)
+    └── deployment/
+        └── install-prerequisites.ps1
 
 docs/
+├── PROJECT-STRUCTURE.md          # Documentation map and navigation guide
+├── DEPLOYMENT-PROCESS.md         # Full deployment workflow
 ├── TERRAFORM-AZD-INTEGRATION.md  # Two-phase deployment guide
-└── SECURITY-AUDIT.md             # Security & networking audit
+├── SECURITY-AUDIT.md             # Security & networking audit
+└── images/ , design/             # Architecture diagrams (PNG, SVG, drawio)
 
 terraform/
-├── README.md               # Terraform-specific guide
-├── modules/
-│   ├── databricks-uc-metastore/    # UC metastore setup
-│   ├── databricks-uc-catalogs/     # Catalogs & schemas
-│   └── databricks-uc-volumes/      # External volumes
-└── environments/
-    ├── dev.tf              # Terraform configuration
-    ├── variables.tf        # Input variables
-    ├── outputs.tf          # Output values
-    └── dev.tfvars          # Environment-specific values (dev)
-```
-
-## 📚 Deployment Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│         Azure Subscription                      │
-├─────────────────────────────────────────────────┤
-│  ┌──────────────────────────────────────────┐  │
-│  │  Bicep IaC (Azure Infrastructure)        │  │
-│  │  ├─ Resource Groups (4)                  │  │
-│  │  ├─ Networking (VNet, NSG, Endpoints)    │  │
-│  │  ├─ Databricks Workspace                 │  │
-│  │  ├─ Azure ML Workspace                   │  │
-│  │  ├─ AI Foundry Hub                       │  │
-│  │  └─ Monitoring (Log Analytics)           │  │
-│  └──────────────────────────────────────────┘  │
-│           ↓ Outputs to                         │
-│  ┌──────────────────────────────────────────┐  │
-│  │  Terraform IaC (Unity Catalog Layer)      │  │
-│  │  ├─ UC Metastore                         │  │
-│  │  ├─ Catalogs & Schemas                   │  │
-│  │  ├─ Volumes & Permissions                │  │
-│  │  └─ Security & Access Control            │  │
-│  └──────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────┘
+├── README.md                     # Terraform-specific guide
+├── metastore/                    # Phase 1.5: account-level UC metastore
+│   ├── main.tf / variables.tf / outputs.tf
+├── environments/                 # Phase 2: catalogs, schemas, volumes
+│   ├── main.tf / variables.tf / outputs.tf / providers.tf / backend.tf / validation.tf
+└── modules/
+    ├── adb-uc-catalogs/           # Catalogs & schemas
+    ├── adb-uc-volumes/            # External volumes
+    ├── adb-workspace-config/      # IP access lists, admin groups, init scripts
+    ├── adb-secret-scopes/         # Databricks & Key Vault-backed secret scopes
+    ├── adb-cluster-policies/      # Cluster policies
+    └── adb-instance-pools/        # Instance pools
 ```
 
 ## 🏛️ Architecture Diagram
@@ -336,7 +376,7 @@ Use the description below as a prompt/spec for an architecture-diagram agent (e.
 
 **Title:** Secure Azure Databricks + Azure ML + AI Foundry — Enterprise Data & AI Platform
 
-**Scope / boundary:** One Azure Subscription, single region (parametrized `location`), environment-scoped (`dev` / `qa` / `prod`) via `environmentName`.
+**Scope / boundary:** One Azure Subscription, single region (parametrized `location`), environment-scoped (`dev` / `staging` / `prod`) via `environmentName`.
 
 **Resource Groups (4, all inside the subscription boundary):**
 1. **Shared RG** (`rg-<project>-shared-<env>`) — networking, security, shared platform services
@@ -436,6 +476,8 @@ az deployment sub show -n databricks-azureml-iac
 
 ### Terraform Unity Catalog Deployment
 
+> `terraform.tfvars` is auto-generated by the `postdeploy` hook from Bicep outputs. For a manual/standalone run, create your own `terraform.tfvars` first (see `terraform/environments/variables.tf` for required inputs).
+
 ```bash
 # Navigate to Terraform directory
 cd terraform/environments
@@ -446,17 +488,17 @@ terraform init
 # Validate configuration
 terraform validate
 
-# Preview changes
-terraform plan -var-file=dev.tfvars
+# Preview changes (uses terraform.tfvars automatically if present)
+terraform plan
 
 # Deploy UC infrastructure
-terraform apply -var-file=dev.tfvars
+terraform apply
 
 # Get outputs
 terraform output -json
 
 # Destroy UC infrastructure (careful!)
-terraform destroy -var-file=dev.tfvars
+terraform destroy
 ```
 
 ### Databricks Setup
@@ -467,11 +509,7 @@ databricks configure --token
 
 # Verify workspace connection
 databricks workspace list
-
-# Run post-deployment setup
-.\infra\scripts\deployment\install-prerequisites.ps1
 ```
-
 
 ## 📞 Support
 
