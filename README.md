@@ -321,6 +321,86 @@ terraform/
 └─────────────────────────────────────────────────┘
 ```
 
+## 🏛️ Architecture Diagram
+
+![Architecture](docs/images/architecture.png)
+
+> GitHub sanitizes animated/CSS-driven SVGs in rendered Markdown, so the static PNG above is used for reliable display. 🎞️ [Open the animated SVG version](docs/images/architecture-animated.svg) locally in a browser to see it in motion · Diagram source (editable): [`docs/design/Azure-Architecture.drawio`](docs/design/Azure-Architecture.drawio)
+
+### Architecture description (for diagramming agents)
+
+Use the description below as a prompt/spec for an architecture-diagram agent (e.g. draw.io, Excalidraw, Mermaid, diagrams.net AI) to (re)generate the schema.
+
+<details>
+<summary>📐 Click to expand full architecture description</summary>
+
+**Title:** Secure Azure Databricks + Azure ML + AI Foundry — Enterprise Data & AI Platform
+
+**Scope / boundary:** One Azure Subscription, single region (parametrized `location`), environment-scoped (`dev` / `qa` / `prod`) via `environmentName`.
+
+**Resource Groups (4, all inside the subscription boundary):**
+1. **Shared RG** (`rg-<project>-shared-<env>`) — networking, security, shared platform services
+2. **Databricks RG** (`rg-<project>-databricks-<env>`) — Databricks workspace resources
+3. **AI Platform RG** (`rg-<project>-ai-<env>`) — Azure ML, AI Foundry, AI Search, Cosmos DB
+4. **Compute RG** (`rg-<project>-compute-<env>`) — AKS, Azure Container Apps
+
+**Networking layer (Shared RG):**
+- 1 Virtual Network (`10.0.0.0/16`) containing subnets:
+  - Databricks public subnet (`10.0.1.0/24`)
+  - Databricks private subnet (`10.0.2.0/24`) — Secure Cluster Connectivity (no public IPs)
+  - Azure ML compute subnet (`10.0.3.0/24`)
+  - AKS subnet (`10.0.4.0/23`)
+  - Azure Container Apps infrastructure subnet (`10.0.6.0/23`)
+  - Private Endpoints subnet (`10.0.8.0/24`)
+  - API Management subnet (`10.0.9.0/24`)
+- Network Security Groups attached to each subnet (restrictive inbound/outbound rules), optional NSG flow logs
+- Shared private DNS zones for all private-linked services
+- Private Endpoints connecting the VNet to: Storage Account, Key Vault, Container Registry, Azure ML workspace, AI Foundry hub, Cosmos DB, AI Search
+- Optional Azure Bastion + Jumpbox VM for secure admin access (no public RDP/SSH)
+
+**Core shared services (Shared RG):**
+- Azure Storage Account (ADLS Gen2, hierarchical namespace, Zone-Redundant Storage) — serves as Databricks root/UC storage and ML data store
+- Azure Key Vault (Premium, purge protection) — platform secrets
+- Dedicated Key Vault for Databricks secret scopes
+- Azure Container Registry (Premium) — shared image registry for ML/AKS/ACA workloads
+- Log Analytics Workspace + Azure Monitor — centralized monitoring/alerting (email alerts)
+- Azure Policy assignments (optional) — governance guardrails
+- App Configuration (optional), API Management (optional, Developer SKU) — API gateway for exposed services
+
+**Databricks layer (Databricks RG, connected into Shared VNet via VNet injection):**
+- Azure Databricks workspace (Premium SKU), VNet-injected into public+private subnets, Secure Cluster Connectivity enabled (no public IP on clusters)
+- Unity Catalog Access Connector (managed identity) for governed storage access
+- Unity Catalog metastore (1 per region, account-level, created via Terraform) attached to the workspace
+- 3 Line-of-Business catalogs per environment (e.g. `dev_lob_team_1/2/3`), each with Medallion schemas: **bronze** (raw) → **silver** (cleaned) → **gold** (analytics-ready)
+- External Locations + Storage Credentials pointing at the ADLS Gen2 account
+- Delta Sharing enabled for governed data exchange
+
+**AI/ML layer (AI Platform RG, private-endpoint connected to Shared VNet):**
+- Azure Machine Learning workspace — compute instances (shared + optional personal), training/inference, linked to shared Storage, Key Vault, ACR
+- Azure Machine Learning Registry (optional) — model/asset sharing across workspaces/regions
+- Azure AI Foundry Hub — generative AI projects, connected to shared ACR/Storage/Key Vault
+- Azure AI Search (optional) — vector/semantic search for AI Foundry / RAG scenarios
+- Azure Cosmos DB (optional) — low-latency operational/metadata store for AI apps
+- Cross-RG role assignments granting AML/AI Foundry managed identities access to shared Storage (Blob/File) and ACR (Pull/Push)
+
+**Compute/app layer (Compute RG, optional):**
+- Azure Kubernetes Service (optional) — containerized workload hosting, connected to AKS subnet
+- Azure Container Apps (optional) — serverless containers, connected to ACA infrastructure subnet
+
+**Identity & Security (cross-cutting):**
+- Azure Entra ID (Azure AD) — identity provider for all RBAC assignments and managed identities
+- Managed Identities for service-to-service auth (no secrets in code)
+- RBAC role assignments scoped per resource/resource group
+- TLS 1.2+ enforced on all service endpoints; storage/data encryption at rest
+
+**Two-phase deployment flow (show as a pipeline/arrow sequence alongside the diagram):**
+1. **Bicep (`azd provision`)** → deploys all Azure infrastructure above (networking, Databricks workspace, storage, Key Vault, ACR, Azure ML, AI Foundry, monitoring) and outputs workspace URL / storage account / region
+2. **Terraform (`azd deploy`, auto-triggered via `postprovision`/`postdeploy` hooks)** → consumes Bicep outputs to configure the Databricks **account-level** Unity Catalog layer: metastore → catalogs/schemas → external locations/credentials → volumes → workspace-to-metastore assignment
+
+**Suggested visual style:** Group by Resource Group as 4 bordered containers inside one subscription boundary; draw the VNet as a container spanning/connecting to Databricks RG, AI Platform RG and Compute RG via private endpoints; use a distinct color per layer (networking = blue, data/governance = green, AI/ML = purple, compute = orange, security/identity = red); show the Bicep → Terraform flow as a separate swimlane or numbered arrow beneath/beside the resource diagram.
+
+</details>
+
 ## 🚀 Deployment Time
 
 Bicep infrastructure: **15-30 minutes**
