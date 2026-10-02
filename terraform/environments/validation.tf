@@ -19,11 +19,9 @@ check "workspace_accessible" {
 
 # Check 2: Catalog Name Validation
 check "catalog_names_valid" {
-  data = [for k, v in var.catalogs : v.name]
-  
   assert {
     condition = alltrue([
-      for name in self.data : can(regex("^[a-z0-9_]{3,255}$", name))
+      for k, v in var.catalogs : can(regex("^[a-z0-9_]{3,255}$", v.name))
     ])
     error_message = "Catalog names must be 3-255 characters, lowercase letters, numbers, and underscores only."
   }
@@ -39,10 +37,8 @@ check "environment_consistency" {
 
 # Check 4: No Duplicate Catalog Names
 check "no_duplicate_catalogs" {
-  data = [for k, v in var.catalogs : v.name]
-  
   assert {
-    condition     = length(self.data) == length(distinct(self.data))
+    condition     = length([for k, v in var.catalogs : v.name]) == length(distinct([for k, v in var.catalogs : v.name]))
     error_message = "Duplicate catalog names detected. Each catalog must have a unique name."
   }
 }

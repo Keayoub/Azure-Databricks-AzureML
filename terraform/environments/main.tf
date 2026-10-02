@@ -11,7 +11,7 @@ data "databricks_current_metastore" "this" {}
 
 locals {
   metastore_id = data.databricks_current_metastore.this.id
-  
+
   # Deployment flags
   deploy_catalogs = var.enable_catalog_management && length(var.catalogs) > 0
   deploy_volumes  = var.enable_volume_management && length(var.volumes) > 0
@@ -63,15 +63,15 @@ module "workspace_config" {
   count  = local.deploy_workspace_config ? 1 : 0
   source = "../modules/adb-workspace-config"
 
-  enable_workspace_config         = true
-  enable_unity_catalog           = var.enable_catalog_management
-  enable_serverless_compute      = var.enable_serverless_compute
+  enable_workspace_config          = true
+  enable_unity_catalog             = var.enable_catalog_management
+  enable_serverless_compute        = var.enable_serverless_compute
   enable_databricks_sql_serverless = var.enable_databricks_sql_serverless
-  max_token_lifetime_days        = var.max_token_lifetime_days
-  enable_ip_access_lists         = var.enable_ip_access_lists
-  ip_access_lists                = var.ip_access_lists
-  global_init_scripts            = var.global_init_scripts
-  
+  max_token_lifetime_days          = var.max_token_lifetime_days
+  enable_ip_access_lists           = var.enable_ip_access_lists
+  ip_access_lists                  = var.ip_access_lists
+  global_init_scripts              = var.global_init_scripts
+
   tags = var.tags
 }
 
@@ -83,19 +83,19 @@ module "cluster_policies" {
   environment_name = var.environment_name
 
   # Built-in policies
-  create_personal_compute_policy   = var.create_personal_compute_policy
-  create_shared_compute_policy     = var.create_shared_compute_policy
-  create_production_jobs_policy    = var.create_production_jobs_policy
-  create_high_concurrency_policy   = var.create_high_concurrency_policy
+  create_personal_compute_policy = var.create_personal_compute_policy
+  create_shared_compute_policy   = var.create_shared_compute_policy
+  create_production_jobs_policy  = var.create_production_jobs_policy
+  create_high_concurrency_policy = var.create_high_concurrency_policy
 
   # Cost controls
   enable_cost_controls     = var.enable_cost_controls
   max_workers_limit        = var.max_workers_limit
   auto_termination_minutes = var.auto_termination_minutes
-  
+
   # Security
   enable_security_hardening = var.enable_security_hardening
-  
+
   # Permissions
   personal_compute_permissions = var.personal_compute_permissions
   shared_compute_permissions   = var.shared_compute_permissions
@@ -112,10 +112,10 @@ module "instance_pools" {
   environment_name = var.environment_name
 
   # Pool creation flags
-  create_general_purpose_pool    = var.create_general_purpose_pool
-  create_high_memory_pool        = var.create_high_memory_pool
-  create_compute_optimized_pool  = var.create_compute_optimized_pool
-  create_gpu_pool                = var.create_gpu_pool
+  create_general_purpose_pool   = var.create_general_purpose_pool
+  create_high_memory_pool       = var.create_high_memory_pool
+  create_compute_optimized_pool = var.create_compute_optimized_pool
+  create_gpu_pool               = var.create_gpu_pool
 
   # General settings
   idle_instance_autotermination_minutes = var.idle_instance_autotermination_minutes
@@ -125,10 +125,10 @@ module "instance_pools" {
   # Pool-specific settings
   general_purpose_min_idle     = var.general_purpose_min_idle
   general_purpose_max_capacity = var.general_purpose_max_capacity
-  
+
   # Permissions
   general_purpose_pool_permissions = var.general_purpose_pool_permissions
-  
+
   tags = var.tags
 }
 

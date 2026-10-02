@@ -1,7 +1,7 @@
 variable "environment_name" {
   description = "Environment name (dev, staging, prod)"
   type        = string
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment_name)
     error_message = "Environment must be dev, staging, or prod"
@@ -19,7 +19,7 @@ variable "databricks_backed_scopes" {
     }))
   }))
   default = {}
-  
+
   sensitive = true
 }
 

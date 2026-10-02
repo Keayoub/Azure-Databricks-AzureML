@@ -38,7 +38,7 @@ variable "max_token_lifetime_days" {
   description = "Maximum token lifetime in days (0 = unlimited)"
   type        = number
   default     = 90
-  
+
   validation {
     condition     = var.max_token_lifetime_days >= 0 && var.max_token_lifetime_days <= 365
     error_message = "Token lifetime must be between 0 and 365 days"

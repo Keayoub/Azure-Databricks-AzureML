@@ -10,13 +10,13 @@ terraform {
     # export ARM_STORAGE_ACCOUNT_NAME="sttfstate<project>"
     # export ARM_CONTAINER_NAME="tfstate"
     # export ARM_KEY="databricks-uc.tfstate"
-    
+
     # Or use -backend-config file:
     # terraform init -backend-config=backend.conf
-    
+
     # Security features
-    use_azuread_auth = true  # Use Azure AD auth instead of access keys
-    
+    use_azuread_auth = true # Use Azure AD auth instead of access keys
+
     # Uncomment for GitHub Actions with OIDC:
     # use_oidc = true
   }

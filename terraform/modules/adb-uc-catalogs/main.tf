@@ -4,8 +4,8 @@
 data "databricks_catalogs" "existing" {}
 
 locals {
-  existing_catalog_names = toset([for c in data.databricks_catalogs.existing.catalogs : c.name])
-  
+  existing_catalog_names = data.databricks_catalogs.existing.ids
+
   # Determine which catalogs to manage
   catalogs_to_manage = var.skip_existing_resources ? {
     for c in local.catalog_list : c.key => c
@@ -15,27 +15,27 @@ locals {
 
 # ========== Create Catalogs ==========
 resource "databricks_catalog" "this" {
-  for_each     = local.catalogs_to_manage
-  metastore_id = var.metastore_id
-  name         = each.value.name
-  comment      = each.value.comment
-  force_destroy = var.environment_name != "prod"  # Safety: never force destroy in production
-  
+  for_each      = local.catalogs_to_manage
+  metastore_id  = var.metastore_id
+  name          = each.value.name
+  comment       = each.value.comment
+  force_destroy = var.environment_name != "prod" # Safety: never force destroy in production
+
   lifecycle {
     # Prevent accidental deletion in production
-    prevent_destroy = false  # Set to true for production environments
-    
+    prevent_destroy = false # Set to true for production environments
+
     # Ignore changes to these fields (managed outside Terraform)
     ignore_changes = [
-      properties,  # Custom properties set via UI
+      properties, # Custom properties set via UI
     ]
-    
+
     # Validate before creation
     precondition {
       condition     = can(regex("^[a-z0-9_]{3,255}$", each.value.name))
       error_message = "Catalog name '${each.value.name}' is invalid. Use 3-255 lowercase letters, numbers, and underscores."
     }
-    
+
     precondition {
       condition     = var.metastore_id != null && var.metastore_id != ""
       error_message = "Metastore ID is required. Ensure metastore is created and assigned to workspace."
@@ -55,7 +55,7 @@ resource "databricks_grants" "catalog_owner" {
     principal  = each.value.owner
     privileges = ["OWNER"]
   }
-  
+
   lifecycle {
     # Ignore manual permission changes
     ignore_changes = [grant]
@@ -66,20 +66,20 @@ resource "databricks_grants" "catalog_owner" {
 resource "databricks_schema" "this" {
   for_each = {
     for s in local.schema_list : "${s.catalog_key}.${s.schema_key}" => s
-    if contains(keys(local.catalogs_to_manage), s.catalog_key)  # Only if catalog is managed
+    if contains(keys(local.catalogs_to_manage), s.catalog_key) # Only if catalog is managed
   }
   catalog_name  = databricks_catalog.this[each.value.catalog_key].name
   name          = each.value.name
   comment       = each.value.comment
   force_destroy = var.environment_name != "prod"
-  
+
   lifecycle {
-    prevent_destroy = false  # Set to true for production
-    
+    prevent_destroy = false # Set to true for production
+
     ignore_changes = [
       properties,
     ]
-    
+
     precondition {
       condition     = can(regex("^[a-z0-9_]{1,255}$", each.value.name))
       error_message = "Schema name '${each.value.name}' is invalid. Use lowercase letters, numbers, and underscores."
@@ -100,7 +100,7 @@ resource "databricks_grants" "schema_owner" {
     principal  = each.value.owner
     privileges = ["OWNER"]
   }
-  
+
   lifecycle {
     ignore_changes = [grant]
   }

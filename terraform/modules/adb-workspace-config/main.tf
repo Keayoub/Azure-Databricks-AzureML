@@ -28,15 +28,15 @@ resource "databricks_workspace_conf" "this" {
       "enableUnityGuarantee" = var.enable_unity_catalog
 
       # Security settings
-      "enableIpAccessLists"           = var.enable_ip_access_lists
-      "enableTokensConfig"            = var.enable_token_management
+      "enableIpAccessLists"                     = var.enable_ip_access_lists
+      "enableTokensConfig"                      = var.enable_token_management
       "enableDeprecatedClusterNamedInitScripts" = false
       "enableDeprecatedGlobalInitScripts"       = false
-      
+
       # Cluster settings
-      "enableDcs"                     = var.enable_databricks_sql_serverless
-      "enableServerlessCompute"       = var.enable_serverless_compute
-      
+      "enableDcs"               = var.enable_databricks_sql_serverless
+      "enableServerlessCompute" = var.enable_serverless_compute
+
       # Notebook settings
       "enableNotebookTableClipboard" = true
       "maxTokenLifetimeDays"         = tostring(var.max_token_lifetime_days)
@@ -121,23 +121,4 @@ resource "databricks_permissions" "workspace_folder" {
   }
 }
 
-# ========== Outputs ==========
-output "workspace_url" {
-  description = "Databricks workspace URL"
-  value       = "Workspace configuration applied"
-}
-
-output "ip_access_lists" {
-  description = "IP access lists created"
-  value       = { for k, v in databricks_ip_access_list.allowed_ips : k => v.id }
-}
-
-output "admin_groups" {
-  description = "Admin groups created"
-  value       = { for k, v in databricks_group.admin_groups : k => v.id }
-}
-
-output "global_init_scripts" {
-  description = "Global init scripts created"
-  value       = { for k, v in databricks_global_init_script.init_scripts : k => v.id }
-}
+# Outputs are defined centrally in outputs.tf

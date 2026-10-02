@@ -28,12 +28,12 @@ resource "databricks_instance_pool" "general_purpose" {
   count = var.create_general_purpose_pool ? 1 : 0
 
   instance_pool_name = "${var.environment_name}-general-purpose-pool"
-  
+
   min_idle_instances = var.general_purpose_min_idle
   max_capacity       = var.general_purpose_max_capacity
-  
+
   node_type_id = var.general_purpose_node_type != "" ? var.general_purpose_node_type : data.databricks_node_type.default_node_type.id
-  
+
   idle_instance_autotermination_minutes = var.idle_instance_autotermination_minutes
 
   preloaded_spark_versions = [
@@ -61,12 +61,12 @@ resource "databricks_instance_pool" "high_memory" {
   count = var.create_high_memory_pool ? 1 : 0
 
   instance_pool_name = "${var.environment_name}-high-memory-pool"
-  
+
   min_idle_instances = var.high_memory_min_idle
   max_capacity       = var.high_memory_max_capacity
-  
+
   node_type_id = var.high_memory_node_type != "" ? var.high_memory_node_type : "Standard_E8s_v3"
-  
+
   idle_instance_autotermination_minutes = var.idle_instance_autotermination_minutes
 
   preloaded_spark_versions = [
@@ -94,12 +94,12 @@ resource "databricks_instance_pool" "compute_optimized" {
   count = var.create_compute_optimized_pool ? 1 : 0
 
   instance_pool_name = "${var.environment_name}-compute-optimized-pool"
-  
+
   min_idle_instances = var.compute_optimized_min_idle
   max_capacity       = var.compute_optimized_max_capacity
-  
+
   node_type_id = var.compute_optimized_node_type != "" ? var.compute_optimized_node_type : "Standard_F8s_v2"
-  
+
   idle_instance_autotermination_minutes = var.idle_instance_autotermination_minutes
 
   preloaded_spark_versions = [
@@ -127,12 +127,12 @@ resource "databricks_instance_pool" "gpu" {
   count = var.create_gpu_pool ? 1 : 0
 
   instance_pool_name = "${var.environment_name}-gpu-pool"
-  
+
   min_idle_instances = var.gpu_min_idle
   max_capacity       = var.gpu_max_capacity
-  
+
   node_type_id = var.gpu_node_type != "" ? var.gpu_node_type : "Standard_NC6s_v3"
-  
+
   idle_instance_autotermination_minutes = var.idle_instance_autotermination_minutes
 
   preloaded_spark_versions = [
@@ -161,12 +161,12 @@ resource "databricks_instance_pool" "custom_pools" {
   for_each = var.custom_pools
 
   instance_pool_name = each.key
-  
+
   min_idle_instances = each.value.min_idle_instances
   max_capacity       = each.value.max_capacity
-  
+
   node_type_id = each.value.node_type_id
-  
+
   idle_instance_autotermination_minutes = each.value.idle_instance_autotermination_minutes
 
   preloaded_spark_versions = each.value.preloaded_spark_versions

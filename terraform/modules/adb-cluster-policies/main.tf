@@ -19,8 +19,8 @@ terraform {
 data "databricks_current_user" "me" {}
 
 data "databricks_node_type" "smallest" {
-  local_disk = true
-  min_cores  = 4
+  local_disk    = true
+  min_cores     = 4
   min_memory_gb = 16
 }
 
@@ -33,13 +33,13 @@ locals {
   # Base policies that can be merged with custom policies
   base_cost_policy = {
     "autoscale.min_workers" = {
-      type  = "range"
-      maxValue = 2
+      type         = "range"
+      maxValue     = 2
       defaultValue = 1
     }
     "autoscale.max_workers" = {
-      type  = "range"
-      maxValue = var.max_workers_limit
+      type         = "range"
+      maxValue     = var.max_workers_limit
       defaultValue = 4
     }
     "autotermination_minutes" = {
@@ -82,32 +82,32 @@ resource "databricks_cluster_policy" "personal_compute" {
   count = var.create_personal_compute_policy ? 1 : 0
 
   name = "${var.environment_name}-personal-compute"
-  
+
   definition = jsonencode({
     "spark_version" = {
-      type  = "unlimited"
+      type         = "unlimited"
       defaultValue = data.databricks_spark_version.latest_lts.id
     }
     "node_type_id" = {
-      type  = "allowlist"
-      values = var.allowed_node_types
+      type         = "allowlist"
+      values       = var.allowed_node_types
       defaultValue = data.databricks_node_type.smallest.id
     }
     "autoscale.min_workers" = {
-      type  = "range"
-      maxValue = 2
-      minValue = 0
+      type         = "range"
+      maxValue     = 2
+      minValue     = 0
       defaultValue = 0
     }
     "autoscale.max_workers" = {
-      type  = "range"
-      maxValue = 4
-      minValue = 1
+      type         = "range"
+      maxValue     = 4
+      minValue     = 1
       defaultValue = 2
     }
     "autotermination_minutes" = {
-      type  = "fixed"
-      value = 30
+      type   = "fixed"
+      value  = 30
       hidden = false
     }
     "custom_tags.Environment" = {
@@ -128,26 +128,26 @@ resource "databricks_cluster_policy" "shared_compute" {
   count = var.create_shared_compute_policy ? 1 : 0
 
   name = "${var.environment_name}-shared-compute"
-  
+
   definition = jsonencode({
     "spark_version" = {
-      type  = "unlimited"
+      type         = "unlimited"
       defaultValue = data.databricks_spark_version.latest_lts.id
     }
     "node_type_id" = {
-      type  = "allowlist"
-      values = var.allowed_node_types
+      type         = "allowlist"
+      values       = var.allowed_node_types
       defaultValue = data.databricks_node_type.smallest.id
     }
     "num_workers" = {
-      type  = "range"
-      maxValue = 10
-      minValue = 2
+      type         = "range"
+      maxValue     = 10
+      minValue     = 2
       defaultValue = 4
     }
     "autotermination_minutes" = {
-      type  = "fixed"
-      value = 60
+      type   = "fixed"
+      value  = 60
       hidden = false
     }
     "data_security_mode" = {
@@ -172,31 +172,31 @@ resource "databricks_cluster_policy" "production_jobs" {
   count = var.create_production_jobs_policy ? 1 : 0
 
   name = "${var.environment_name}-production-jobs"
-  
+
   definition = jsonencode({
     "spark_version" = {
-      type  = "unlimited"
+      type         = "unlimited"
       defaultValue = data.databricks_spark_version.latest_lts.id
     }
     "node_type_id" = {
-      type  = "allowlist"
+      type   = "allowlist"
       values = var.allowed_node_types
     }
     "autoscale.min_workers" = {
-      type  = "range"
-      maxValue = 20
-      minValue = 2
+      type         = "range"
+      maxValue     = 20
+      minValue     = 2
       defaultValue = 2
     }
     "autoscale.max_workers" = {
-      type  = "range"
-      maxValue = 50
-      minValue = 2
+      type         = "range"
+      maxValue     = 50
+      minValue     = 2
       defaultValue = 10
     }
     "autotermination_minutes" = {
-      type  = "fixed"
-      value = 10
+      type   = "fixed"
+      value  = 10
       hidden = true
     }
     "cluster_type" = {
@@ -220,7 +220,7 @@ resource "databricks_cluster_policy" "production_jobs" {
       value = "ProductionJobs"
     }
     "custom_tags.CostCenter" = {
-      type  = "unlimited"
+      type         = "unlimited"
       defaultValue = var.default_cost_center
     }
   })
@@ -233,20 +233,20 @@ resource "databricks_cluster_policy" "high_concurrency" {
   count = var.create_high_concurrency_policy ? 1 : 0
 
   name = "${var.environment_name}-high-concurrency"
-  
+
   definition = jsonencode({
     "spark_version" = {
-      type  = "unlimited"
+      type         = "unlimited"
       defaultValue = data.databricks_spark_version.latest_lts.id
     }
     "node_type_id" = {
-      type  = "allowlist"
+      type   = "allowlist"
       values = var.allowed_node_types
     }
     "num_workers" = {
-      type  = "range"
-      maxValue = 20
-      minValue = 1
+      type         = "range"
+      maxValue     = 20
+      minValue     = 1
       defaultValue = 4
     }
     "autotermination_minutes" = {
@@ -278,8 +278,8 @@ resource "databricks_cluster_policy" "high_concurrency" {
 resource "databricks_cluster_policy" "custom_policies" {
   for_each = var.custom_policies
 
-  name       = each.key
-  definition = jsonencode(each.value.definition)
+  name        = each.key
+  definition  = jsonencode(each.value.definition)
   description = each.value.description
 }
 

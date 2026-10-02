@@ -16,8 +16,8 @@ variable "environment_name" {
 variable "databricks_workspace_host" {
   description = "Databricks workspace host URL (from Bicep deployment)"
   type        = string
-  sensitive   = true  # Prevent logging of workspace URLs
-  
+  sensitive   = true # Prevent logging of workspace URLs
+
   validation {
     condition     = can(regex("^https://", var.databricks_workspace_host))
     error_message = "Workspace host must be a valid HTTPS URL."
@@ -44,7 +44,7 @@ variable "catalogs" {
       schemas = {}
     }
   }
-  
+
   validation {
     condition = alltrue([
       for k, v in var.catalogs : can(regex("^[a-z0-9_]{3,255}$", v.name))

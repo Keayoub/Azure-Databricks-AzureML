@@ -1,7 +1,7 @@
 variable "environment_name" {
   description = "Environment name (dev, staging, prod)"
   type        = string
-  
+
   validation {
     condition     = contains(["dev", "staging", "prod"], var.environment_name)
     error_message = "Environment must be dev, staging, or prod"
@@ -56,7 +56,7 @@ variable "idle_instance_autotermination_minutes" {
   description = "Minutes before idle instances are terminated"
   type        = number
   default     = 15
-  
+
   validation {
     condition     = var.idle_instance_autotermination_minutes >= 5 && var.idle_instance_autotermination_minutes <= 1440
     error_message = "Idle instance autotermination must be between 5 minutes and 24 hours"
@@ -85,7 +85,7 @@ variable "azure_availability" {
   description = "Azure availability type (SPOT_AZURE, ON_DEMAND_AZURE, SPOT_WITH_FALLBACK_AZURE)"
   type        = string
   default     = "ON_DEMAND_AZURE"
-  
+
   validation {
     condition     = contains(["SPOT_AZURE", "ON_DEMAND_AZURE", "SPOT_WITH_FALLBACK_AZURE"], var.azure_availability)
     error_message = "Invalid Azure availability type"

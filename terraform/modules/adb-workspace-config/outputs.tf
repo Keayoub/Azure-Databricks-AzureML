@@ -3,6 +3,11 @@ output "workspace_configured" {
   value       = var.enable_workspace_config
 }
 
+output "workspace_url" {
+  description = "Databricks workspace URL"
+  value       = "Workspace configuration applied"
+}
+
 output "ip_access_lists" {
   description = "IP access lists created"
   value       = { for k, v in databricks_ip_access_list.allowed_ips : k => v.id }
